@@ -1,0 +1,27 @@
+
+// Bostr config
+
+module.exports = {
+  // Server listener [Required]
+  address: "0.0.0.0",
+  port: "8080",
+
+  // Server information.
+  // Only for when nostr client requesting server information.
+  server_meta: {
+    "contact": "unset",
+    "description": "Nostr Bouncer Server",
+    "name": "Bostr",
+    "software": "git+https://github.com/Yonle/bostr",
+    "supported_nips": [1],
+    "version": "1.0.0"
+  },
+
+  // Nostr relays to bounce [Required]
+  relays: [
+    "wss://example1.com",
+    "wss://example2.com",
+    // "wss://example3.com",
+    // ...and so on
+  ]
+}
