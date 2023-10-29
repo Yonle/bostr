@@ -66,7 +66,7 @@ module.exports = (ws, req) => {
   csess.set(ws.id, ws);
 }
 
-// CL - Btoadcast message to every existing client sockets
+// CL - Broadcast message to every existing client sockets
 function bc_c(msg) {
   csess.forEach(sock => {
     if (sock.readyState >= 2) return csess.delete(sock.id);
