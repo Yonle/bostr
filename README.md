@@ -36,6 +36,10 @@ Or run in background with `tmux`:
 tmux new -d "node index.js"
 ```
 
+## Environment Variable
+- `CLUSTERS` - Run Bostr with specified numbers of clusters.
+- `IN_MEMORY` - Store temporary data in memory (RAM) instead of disk.
+
 ## License
 
 Copyright 2023 Yonle <yonle@lecturify.net>
