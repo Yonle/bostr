@@ -120,10 +120,6 @@ function newConn(addr) {
         csess.get(cID)?.send(JSON.stringify(data));
         break;
       }
-      case "NOTICE":
-        console.log(process.pid, relay.addr, "NOTICE", data[1]);
-        bc_c(data);
-        break;
     }
   });
 
