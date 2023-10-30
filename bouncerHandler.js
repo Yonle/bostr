@@ -40,6 +40,8 @@ module.exports = (ws, req) => {
         ws.send(JSON.stringify(["EOSE", data[1]]));
         break;
       case "CLOSE":
+        if (typeof(data[1]) !== "string") ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
+        data[1] = ws.id + ":" + data[1];
         bc(data);
         sess.prepare("DELETE FROM sess WHERE cID = ? AND subID = ?;").run(ws.id, data[1]);
         sess.prepare("DELETE FROM events WHERE cID = ? AND subID = ?;").run(ws.id, data[1]);
