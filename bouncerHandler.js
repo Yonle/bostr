@@ -2,7 +2,7 @@ const SQLite = require("better-sqlite3");
 const WebSocket = require("ws");
 const { relays } = require("./config");
 const socks = new Set();
-const sess = new SQLite(process.env.IN_MEMORY ? null : (__dirname + "/6.temporary.db"));
+const sess = new SQLite(process.env.IN_MEMORY ? null : (__dirname + "/.temporary.db"));
 const csess = new Map();
 
 // Handle database....
