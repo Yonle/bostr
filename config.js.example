@@ -11,7 +11,12 @@ module.exports = {
   // 2 -> Accurate, But every clients will connects to numbers of <relays>
   mode: 1,
 
+  // Clusters.
   clusters: 1,
+
+  // Whenever store temporary data in memory (RAM) or in a disk
+  // Options: disk, ram
+  tmp_store: "disk",
 
   // Server information.
   // Only for when nostr client requesting server information.
