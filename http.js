@@ -26,7 +26,7 @@ server.on('request', (req, res) => {
       res.write("- " + _ + "\n");
     });
 
-    res.write(`\nI have ${wss.clients.size} clients currently connected to this bouncer${(process.env.CLUSTERS || config.clusters) > 1 ? " on this cluster"}.\n`);
+    res.write(`\nI have ${wss.clients.size} clients currently connected to this bouncer${(process.env.CLUSTERS || config.clusters) > 1 ? " on this cluster" : ""}.\n`);
     res.write(`\nConnect to this bouncer with nostr client: ws://${req.headers.host} or wss://${req.headers.host}\n\n---\n`);
     res.end("Powered by Bostr - Open source nostr Bouncer\nhttps://github.com/Yonle/bostr");
   } else {
