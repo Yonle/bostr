@@ -123,10 +123,10 @@ function newConn(addr, id) {
     }
   });
 
-  relay.on('error', _ => console.error(process.pid, "-!-", relay.addr, _.toString()));
+  relay.on('error', _ => console.error(process.pid, "-!-", `[${id}]`, relay.addr, _.toString()));
   relay.on('close', _ => {
     socks.delete(relay) // Remove this socket session from [socks] list
-    console.log(process.pid, "-!-", `[${socks.size}/${relays.length*csess.size}]`, "Disconnected from", relay.addr);
+    console.log(process.pid, "-!-", `[${id}] [${socks.size}/${relays.length*csess.size}]`, "Disconnected from", relay.addr);
 
     if (!csess.has(id)) return;
     setTimeout(_ => newConn(addr, id), 5000); // As a bouncer server, We need to reconnect.
