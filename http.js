@@ -33,7 +33,6 @@ server.on('request', (req, res) => {
 });
 
 server.on('upgrade', (req, sock, head) => {
-  log(`${req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address} - WS CONN`);
   wss.handleUpgrade(req, sock, head, _ => handleBouncer(_, req));
 });
 

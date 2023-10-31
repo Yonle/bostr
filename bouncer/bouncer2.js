@@ -16,7 +16,7 @@ sess.exec("CREATE TABLE IF NOT EXISTS events (cID TEXT, subID TEXT, eID TEXT);")
 module.exports = (ws, req) => {
   ws.id = process.pid + Math.floor(Math.random() * 1000) + "_" + csess.size;
 
-  console.log(process.pid, `->- ${req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address} is now known as ${ws.id}`);
+  console.log(process.pid, `->- ${req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address} connected as ${ws.id}`);
   ws.on("message", data => {
     try {
       data = JSON.parse(data);
