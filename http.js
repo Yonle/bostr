@@ -12,8 +12,6 @@ const log = _ => console.log(process.pid, curD(), "-", _);
 const server = http.createServer()
 const wss = new WebSocket.WebSocketServer({ noServer: true });
 
-let maxsocks = 0;
-
 server.on('request', (req, res) => {
   log(`${req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address} - ${req.method} ${req.url}`)
 
@@ -28,7 +26,7 @@ server.on('request', (req, res) => {
       res.write("- " + _ + "\n");
     });
 
-    res.write(`\nI have ${wss.clients.size} users currently connected to this bouncer.\n`);
+    res.write(`\nI have ${wss.clients.size} clients currently connected to this bouncer.\n`);
     res.write(`\nConnect to this bouncer with nostr client: ws://${req.headers.host} or wss://${req.headers.host}\n\n---\n`);
     res.end("Powered by Bostr - Open source nostr Bouncer\nhttps://github.com/Yonle/bostr");
   } else {
