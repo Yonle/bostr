@@ -6,6 +6,11 @@ module.exports = {
   address: "0.0.0.0",
   port: "8080",
 
+  // Bouncing mode
+  // 1 -> Normal, But inaccurate
+  // 2 -> Accurate, But every clients will connects to numbers of <relays>
+  mode: 1,
+
   // Server information.
   // Only for when nostr client requesting server information.
   server_meta: {

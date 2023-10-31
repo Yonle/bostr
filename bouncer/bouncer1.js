@@ -1,8 +1,8 @@
 const SQLite = require("better-sqlite3");
 const WebSocket = require("ws");
-const { relays } = require("./config");
+const { relays } = require("../config");
 const socks = new Set();
-const sess = new SQLite(process.env.IN_MEMORY ? null : (__dirname + "/.temporary.db"));
+const sess = new SQLite(process.env.IN_MEMORY ? null : (__dirname + "/../.temporary.db"));
 const csess = new Map();
 
 // Handle database....
@@ -123,7 +123,7 @@ function newConn(addr) {
     }
   });
 
-  relay.on('error', _ => console.error(relay.addr, _));
+  relay.on('error', _ => console.error(process.pid, "-!-", relay.addr, _.toString()));
   relay.on('close', _ => {
     socks.delete(relay) // Remove this socket session from [socks] list
     console.log(process.pid, "-!-", `[${socks.size}/${relays.length}]`, "Disconnected from", relay.addr);
