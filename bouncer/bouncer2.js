@@ -9,7 +9,7 @@ const csess = new Map();
 sess.unsafeMode(true);
 
 // Temporary database.
-sess.exec("CREATE TABLE IF NOT EXISTS sess (cID TEXT, subID TEXT);");
+sess.exec("CREATE TABLE IF NOT EXISTS sess (cID TEXT, subID TEXT, filter TEXT);");
 sess.exec("CREATE TABLE IF NOT EXISTS events (cID TEXT, subID TEXT, eID TEXT);"); // To prevent transmitting duplicates
 
 // CL - User socket
@@ -37,7 +37,7 @@ module.exports = (ws, req) => {
         if (typeof(data[2]) !== "object") return ws.send(JSON.stringify(["NOTICE", "expected filter to be obj, instead gives the otherwise."]));
         // eventname -> 1_eventname
         bc(data, ws.id);
-        sess.prepare("INSERT INTO sess VALUES (?, ?);").run(ws.id, data[1]);
+        sess.prepare("INSERT INTO sess VALUES (?, ?, ?);").run(ws.id, data[1], JSON.stringify(data[2]));
         ws.send(JSON.stringify(["EOSE", data[1]]));
         break;
       case "CLOSE":
@@ -107,9 +107,9 @@ function newConn(addr, id) {
   relay.on('open', _ => {
     socks.add(relay); // Add this socket session to [socks]
     console.log(process.pid, "---", `[${id}] [${socks.size}/${relays.length}]`, relay.addr, "is connected");
-    for (i of sess.prepare("SELECT subID FROM sess WHERE cID = ?;").iterate(id)) {
+    for (i of sess.prepare("SELECT subID, filter FROM sess WHERE cID = ?;").iterate(id)) {
       if (relay.readyState >= 2) break;
-      relay.send(JSON.stringify(["REQ", i.subID]));
+      relay.send(JSON.stringify(["REQ", i.subID, JSON.parse(i.filter)]));
     }
   });
 
