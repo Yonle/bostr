@@ -70,15 +70,6 @@ module.exports = (ws, req) => {
   relays.forEach(_ => newConn(_, ws.id));
 }
 
-// CL - Broadcast message to every existing client sockets
-function bc_c(msg, id) {
-  for (sock of csess) {
-    if (sock.id !== id) continue;
-    if (sock.readyState >= 2) return csess.delete(sock.id);
-    sock.send(JSON.stringify(msg));
-  }
-}
-
 // WS - Broadcast message to every existing sockets
 function bc(msg, id) {
   for (sock of socks) {
@@ -126,7 +117,7 @@ function newConn(addr, id) {
         if (sess.prepare("SELECT * FROM events WHERE cID = ? AND subID = ? AND eID = ?;").get(id, data[1], data[2]?.id)) return; // No need to transmit once it has been transmitted before.
 
         sess.prepare("INSERT INTO events VALUES (?, ?, ?);").run(id, data[1], data[2]?.id);
-        bc_c(data, id);
+        csess.get(id)?.send(JSON.stringify(data));
         break;
       }
     }
