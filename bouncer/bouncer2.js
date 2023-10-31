@@ -107,7 +107,7 @@ function newConn(addr, id) {
   relay.on('open', _ => {
     socks.add(relay); // Add this socket session to [socks]
     console.log(process.pid, "---", `[${id}] [${socks.size}/${relays.length}]`, relay.addr, "is connected");
-    for (i of db.prepare("SELECT subID FROM sess WHERE cID = ?;").iterate(id)) {
+    for (i of sess.prepare("SELECT subID FROM sess WHERE cID = ?;").iterate(id)) {
       if (relay.readyState >= 2) break;
       relay.send(JSON.stringify(["REQ", i.subID]));
     }
