@@ -7,7 +7,7 @@ module.exports = {
   port: "8080",
 
   // Bouncing mode
-  // 1 -> Normal, But inaccurate
+  // 1 -> Normal. Bouncer connects to <relays> at startup.
   // 2 -> Accurate, But every clients will connects to numbers of <relays>
   mode: 1,
 
