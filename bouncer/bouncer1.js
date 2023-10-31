@@ -70,18 +70,18 @@ module.exports = (ws, req) => {
 
 // CL - Broadcast message to every existing client sockets
 function bc_c(msg) {
-  csess.forEach(sock => {
+  for (sock of csess) {
     if (sock.readyState >= 2) return csess.delete(sock.id);
     sock.send(JSON.stringify(msg));
-  });
+  }
 }
 
 // WS - Broadcast message to every existing sockets
 function bc(msg) {
-  socks.forEach(sock => {
+  for (sock of socks) {
     if (sock.readyState >= 2) return socks.delete(sock);
     sock.send(JSON.stringify(msg));
-  });
+  }
 }
 
 // WS - Sessions
@@ -92,6 +92,10 @@ function newConn(addr) {
   relay.on('open', _ => {
     socks.add(relay); // Add this socket session to [socks]
     console.log(process.pid, "---", `[${socks.size}/${relays.length}]`, relay.addr, "is connected");
+    for (i of db.prepare("SELECT subID FROM sess WHERE cID = ?;").iterate(id)) {
+      if (relay.readyState >= 2) break;
+      relay.send(JSON.stringify(["REQ", i.subID]));
+    }
   });
 
   relay.on('message', data => {
