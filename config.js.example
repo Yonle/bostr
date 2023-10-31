@@ -11,6 +11,8 @@ module.exports = {
   // 2 -> Accurate, But every clients will connects to numbers of <relays>
   mode: 1,
 
+  clusters: 1,
+
   // Server information.
   // Only for when nostr client requesting server information.
   server_meta: {

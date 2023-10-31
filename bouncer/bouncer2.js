@@ -93,6 +93,7 @@ function terminate_sess(id) {
   socks.forEach(sock => {
     if (sock.id !== id) return;
     sock.terminate();
+    socks.delete(sock);
   });
 }
 

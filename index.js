@@ -1,3 +1,4 @@
+const config = require("./config");
 const cluster = require("cluster");
 const fs = require("fs");
 const os = require("os");
@@ -7,7 +8,7 @@ if (!process.env.NO_CLUSTERS && cluster.isPrimary) {
     fs.rmSync(".temporary.db");
   } catch {}
 
-  const numClusters = process.env.CLUSTERS || (os.availableParallelism ? os.availableParallelism() : (os.cpus().length || 2))
+  const numClusters = process.env.CLUSTERS || config.clusters || (os.availableParallelism ? os.availableParallelism() : (os.cpus().length || 2))
 
   console.log(`Primary ${process.pid} is running. Will fork ${numClusters} clusters.`);
 
