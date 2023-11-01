@@ -57,9 +57,6 @@ module.exports = (ws, req) => {
   ws.on('close', _ => {
     console.log(process.pid, "---", "Sock", ws.id, "has disconnected.");
     csess.delete(ws.id);
-    for (i of sess.prepare("SELECT subID FROM sess WHERE cID = ?").iterate(ws.id)) {
-      bc(["CLOSE", i.subID]);
-    }
 
     sess.prepare("DELETE FROM sess WHERE cID = ?;").run(ws.id);
     sess.prepare("DELETE FROM events WHERE cID = ?;").run(ws.id);
