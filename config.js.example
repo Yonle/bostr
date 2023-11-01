@@ -8,15 +8,15 @@ module.exports = {
 
   // Bouncing mode
   // 1 -> Fast. Bouncer connects to <relays> at startup.
-  // 2 -> Accurate, But every clients will connects to numbers of <relays>
+  // 2 -> Accurate. Every clients has their own sessions.
   mode: 1,
 
   // Clusters.
   clusters: 1,
 
   // Whenever store temporary data in memory (RAM) or in a disk
-  // Options: disk, ram
-  tmp_store: "disk",
+  // Options: disk, memory
+  tmp_store: "memory",
 
   // Server information.
   // Only for when nostr client requesting server information.
