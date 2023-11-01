@@ -5,6 +5,8 @@ const socks = new Set();
 const sess = new SQLite((process.env.IN_MEMORY || tmp_store != "disk") ? null : (__dirname + "/../.temporary.db"));
 const csess = new Map();
 
+const pendingEOSE = new Set();
+
 // Handle database....
 sess.unsafeMode(true);
 
@@ -39,12 +41,13 @@ module.exports = (ws, req) => {
         // eventname -> 1_eventname
         bc(data);
         sess.prepare("INSERT INTO sess VALUES (?, ?, ?);").run(ws.id, data[1], JSON.stringify(data[2]));
-        ws.send(JSON.stringify(["EOSE", data[1]]));
+        pendingEOSE.add(data[1]);
         break;
       case "CLOSE":
         if (typeof(data[1]) !== "string") ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
         data[1] = ws.id + ":" + data[1];
         bc(data);
+        pendingEOSE.delete(data[1]);
         sess.prepare("DELETE FROM sess WHERE cID = ? AND subID = ?;").run(ws.id, data[1]);
         sess.prepare("DELETE FROM events WHERE cID = ? AND subID = ?;").run(ws.id, data[1]);
         break;
@@ -61,6 +64,7 @@ module.exports = (ws, req) => {
     csess.delete(ws.id);
     for (i of sess.prepare("SELECT subID FROM sess WHERE cID = ?").iterate(ws.id)) {
       bc(["CLOSE", i.subID]);
+      pendingEOSE.delete(i.subID);
     }
 
     sess.prepare("DELETE FROM sess WHERE cID = ?;").run(ws.id);
@@ -89,6 +93,7 @@ function newConn(addr) {
     for (i of sess.prepare("SELECT subID, filter FROM sess").iterate()) {
       if (relay.readyState >= 2) break;
       relay.send(JSON.stringify(["REQ", i.subID, JSON.parse(i.filter)]));
+      pendingEOSE.add(i.subID);
     }
   });
 
@@ -116,6 +121,21 @@ function newConn(addr) {
         sess.prepare("INSERT INTO events VALUES (?, ?, ?);").run(cID, subID, data[2]?.id);
         data[1] = sID;
         csess.get(cID)?.send(JSON.stringify(data));
+        break;
+      }
+      case "EOSE": {
+        const subID = data[1];
+        if (!pendingEOSE.has(subID)) return;
+        const args = subID.split(":")
+        /*
+            args[0]                 -> Client socket ID (bouncer -> client)
+            args.slice(1).join(":") -> Actual subscription ID that socket client requested.
+         */
+        const cID = args[0];
+        const sID = args.slice(1).join(":");
+
+        csess.get(cID)?.send(JSON.stringify(["EOSE", sID]));
+        pendingEOSE.delete(subID);
         break;
       }
     }

@@ -5,6 +5,8 @@ const socks = new Set();
 const sess = new SQLite((process.env.IN_MEMORY || tmp_store != "disk") ? null : (__dirname + "/../.temporary.db"));
 const csess = new Map();
 
+const pendingEOSE = new Set();
+
 // Handle database....
 sess.unsafeMode(true);
 
@@ -38,11 +40,12 @@ module.exports = (ws, req) => {
         // eventname -> 1_eventname
         bc(data, ws.id);
         sess.prepare("INSERT INTO sess VALUES (?, ?, ?);").run(ws.id, data[1], JSON.stringify(data[2]));
-        ws.send(JSON.stringify(["EOSE", data[1]]));
+        pendingEOSE.add(ws.id + ":" + data[1]);
         break;
       case "CLOSE":
         if (typeof(data[1]) !== "string") ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
         bc(data, ws.id);
+        pendingEOSE.delete(ws.id + ":" + data[1]);
         sess.prepare("DELETE FROM sess WHERE cID = ? AND subID = ?;").run(ws.id, data[1]);
         sess.prepare("DELETE FROM events WHERE cID = ? AND subID = ?;").run(ws.id, data[1]);
         break;
@@ -83,6 +86,11 @@ function terminate_sess(id) {
     sock.terminate();
     socks.delete(sock);
   }
+
+  for (sub of pendingEOSE) {
+    if (!sub.startsWith(id)) continue;
+    pendingEOSE.delete(id);
+  }
 }
 
 // WS - Sessions
@@ -98,6 +106,7 @@ function newConn(addr, id) {
     for (i of sess.prepare("SELECT subID, filter FROM sess WHERE cID = ?;").iterate(id)) {
       if (relay.readyState >= 2) break;
       relay.send(JSON.stringify(["REQ", i.subID, JSON.parse(i.filter)]));
+      pendingEOSE.add(id + ":" + i.subID);
     }
   });
 
@@ -117,6 +126,10 @@ function newConn(addr, id) {
         csess.get(id)?.send(JSON.stringify(data));
         break;
       }
+      case "EOSE":
+        if (!pendingEOSE.has(id + ":" + data[1])) return;
+        csess.get(id)?.send(JSON.stringify(data));
+        break;
     }
   });
 
