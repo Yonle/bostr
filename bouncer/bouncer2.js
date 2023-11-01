@@ -1,6 +1,6 @@
 const SQLite = require("better-sqlite3");
 const WebSocket = require("ws");
-const { relays, tmp_store } = require("../config");
+const { relays, tmp_store, log_about_relays } = require("../config");
 const socks = new Set();
 const sess = new SQLite((process.env.IN_MEMORY || tmp_store != "disk") ? null : (__dirname + "/../.temporary.db"));
 const csess = new Map();
@@ -94,7 +94,7 @@ function newConn(addr, id) {
   relay.addr = addr;
   relay.on('open', _ => {
     socks.add(relay); // Add this socket session to [socks]
-    console.log(process.pid, "---", `[${id}] [${socks.size}/${relays.length*csess.size}]`, relay.addr, "is connected");
+    if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.log(process.pid, "---", `[${id}] [${socks.size}/${relays.length*csess.size}]`, relay.addr, "is connected");
     for (i of sess.prepare("SELECT subID, filter FROM sess WHERE cID = ?;").iterate(id)) {
       if (relay.readyState >= 2) break;
       relay.send(JSON.stringify(["REQ", i.subID, JSON.parse(i.filter)]));
@@ -120,10 +120,12 @@ function newConn(addr, id) {
     }
   });
 
-  relay.on('error', _ => console.error(process.pid, "-!-", `[${id}]`, relay.addr, _.toString()));
+  relay.on('error', _ => {
+    if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.error(process.pid, "-!-", `[${id}]`, relay.addr, _.toString())
+  });
   relay.on('close', _ => {
     socks.delete(relay) // Remove this socket session from [socks] list
-    console.log(process.pid, "-!-", `[${id}] [${socks.size}/${relays.length*csess.size}]`, "Disconnected from", relay.addr);
+    if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.log(process.pid, "-!-", `[${id}] [${socks.size}/${relays.length*csess.size}]`, "Disconnected from", relay.addr);
 
     if (!csess.has(id)) return;
     setTimeout(_ => newConn(addr, id), 5000); // As a bouncer server, We need to reconnect.

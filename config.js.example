@@ -18,6 +18,9 @@ module.exports = {
   // Options: disk, memory
   tmp_store: "memory",
 
+  // Log about bouncer connection with relays? 
+  log_about_relays: false,
+
   // Server information.
   // Only for when nostr client requesting server information.
   server_meta: {

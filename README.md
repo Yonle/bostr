@@ -10,7 +10,7 @@ Nostr relays is bunch of dummy servers and usually connects to more than 5-10 re
 Due to it is nature to connect to more than two or three relays, This caused a issue such as mobile data bandwidth drained drastically, and similiar
 
 
-This project serve the purpose as a bouncer to solve this issue.
+This project serve the purpose as a bouncer to reduce client bandwidth usage.
 
 ## Installation
 - NodeJS (+v14)
@@ -39,6 +39,7 @@ tmux new -d "node index.js"
 ## Environment Variable
 - `CLUSTERS` - Run Bostr with specified numbers of clusters.
 - `IN_MEMORY` - Store temporary data in memory (RAM) instead of disk.
+- `LOG_ABOUT_RELAYS` - Whenever to log about relay connections
 
 ## License
 
