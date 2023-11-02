@@ -1,5 +1,5 @@
 # Bostr
-A nostr bouncer
+A nostr bouncer for reducing client bandwidth.
 
 ## What is this?
 It's a bouncer for Nostr relays
@@ -9,8 +9,10 @@ Nostr relays is bunch of dummy servers and usually connects to more than 5-10 re
 
 Due to it is nature to connect to more than two or three relays, This caused a issue such as mobile data bandwidth drained drastically, and similiar
 
-
 This project serve the purpose as a bouncer to reduce client bandwidth usage.
+
+## How it works?
+![How it works](img/how_it_works.png)
 
 ## Installation
 - NodeJS (+v14)
