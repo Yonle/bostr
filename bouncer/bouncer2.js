@@ -43,7 +43,7 @@ module.exports = (ws, req) => {
         pendingEOSE.add(ws.id + ":" + data[1]);
         break;
       case "CLOSE":
-        if (typeof(data[1]) !== "string") ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
+        if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
         bc(data, ws.id);
         pendingEOSE.delete(ws.id + ":" + data[1]);
         sess.prepare("DELETE FROM sess WHERE cID = ? AND subID = ?;").run(ws.id, data[1]);

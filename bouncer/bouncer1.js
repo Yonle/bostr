@@ -44,7 +44,7 @@ module.exports = (ws, req) => {
         pendingEOSE.add(data[1]);
         break;
       case "CLOSE":
-        if (typeof(data[1]) !== "string") ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
+        if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
         data[1] = ws.id + ":" + data[1];
         bc(data);
         pendingEOSE.delete(data[1]);
