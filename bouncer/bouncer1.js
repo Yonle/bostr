@@ -5,7 +5,7 @@ const socks = new Set();
 const sess = new SQLite((process.env.IN_MEMORY || tmp_store != "disk") ? null : (__dirname + "/../.temporary.db"));
 const csess = new Map();
 
-const pendingEOSE = new Set();
+const pendingEOSE = new Map();
 
 // Handle database....
 sess.unsafeMode(true);
@@ -41,7 +41,7 @@ module.exports = (ws, req) => {
         // eventname -> 1_eventname
         bc(data);
         sess.prepare("INSERT INTO sess VALUES (?, ?, ?);").run(ws.id, data[1], JSON.stringify(data[2]));
-        pendingEOSE.add(data[1]);
+        pendingEOSE.set(data[1], 0);
         break;
       case "CLOSE":
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
@@ -93,7 +93,7 @@ function newConn(addr) {
     for (i of sess.prepare("SELECT subID, filter FROM sess").iterate()) {
       if (relay.readyState >= 2) break;
       relay.send(JSON.stringify(["REQ", i.subID, JSON.parse(i.filter)]));
-      pendingEOSE.add(i.subID);
+      if (!pendingEOSE.has(i.subID)) pendingEOSE.set(i.subID, 0);
     }
   });
 
@@ -126,6 +126,8 @@ function newConn(addr) {
       case "EOSE": {
         const subID = data[1];
         if (!pendingEOSE.has(subID)) return;
+        pendingEOSE.set(subID, pendingEOSE.get(subID) + 1);
+        if (pendingEOSE.get(subID) < relays.length) return;
         const args = subID.split(":")
         /*
             args[0]                 -> Client socket ID (bouncer -> client)

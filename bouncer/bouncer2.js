@@ -5,7 +5,7 @@ const socks = new Set();
 const sess = new SQLite((process.env.IN_MEMORY || tmp_store != "disk") ? null : (__dirname + "/../.temporary.db"));
 const csess = new Map();
 
-const pendingEOSE = new Set();
+const pendingEOSE = new Map();
 
 // Handle database....
 sess.unsafeMode(true);
@@ -40,7 +40,7 @@ module.exports = (ws, req) => {
         // eventname -> 1_eventname
         bc(data, ws.id);
         sess.prepare("INSERT INTO sess VALUES (?, ?, ?);").run(ws.id, data[1], JSON.stringify(data[2]));
-        pendingEOSE.add(ws.id + ":" + data[1]);
+        pendingEOSE.set(ws.id + ":" + data[1], 0);
         break;
       case "CLOSE":
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
@@ -106,7 +106,6 @@ function newConn(addr, id) {
     for (i of sess.prepare("SELECT subID, filter FROM sess WHERE cID = ?;").iterate(id)) {
       if (relay.readyState >= 2) break;
       relay.send(JSON.stringify(["REQ", i.subID, JSON.parse(i.filter)]));
-      pendingEOSE.add(id + ":" + i.subID);
     }
   });
 
@@ -128,6 +127,8 @@ function newConn(addr, id) {
       }
       case "EOSE":
         if (!pendingEOSE.has(id + ":" + data[1])) return;
+        pendingEOSE.set(id + ":" + data[1], pendingEOSE.get(id + ":" + data[1]) + 1);
+        if (pendingEOSE.get(id + ":" + data[1]) < relays.length) return;
         csess.get(id)?.send(JSON.stringify(data));
         break;
     }
