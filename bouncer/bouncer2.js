@@ -128,7 +128,7 @@ function newConn(addr, id) {
       case "EOSE":
         if (!pendingEOSE.has(id + ":" + data[1])) return;
         pendingEOSE.set(id + ":" + data[1], pendingEOSE.get(id + ":" + data[1]) + 1);
-        if (pendingEOSE.get(id + ":" + data[1]) < Object.from(relays).filter(_ => _.id === id).length) return;
+        if (pendingEOSE.get(id + ":" + data[1]) < Array.from(relays).filter(_ => _.id === id).length) return;
         csess.get(id)?.send(JSON.stringify(data));
         break;
     }
