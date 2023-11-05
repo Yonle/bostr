@@ -13,6 +13,8 @@ services:
       context: .
     environment:
       NODE_ENV: production
+    volumes:
+      - ./config.js:/usr/src/app/config.js
     ports:
       - 8080:8080
 
