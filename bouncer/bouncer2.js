@@ -88,7 +88,7 @@ function terminate_sess(id) {
   }
 
   for (sub of pendingEOSE) {
-    if (!sub.startsWith(id)) continue;
+    if (!sub[0].startsWith(id)) continue;
     pendingEOSE.delete(id);
   }
 }
