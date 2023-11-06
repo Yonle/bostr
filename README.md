@@ -43,6 +43,15 @@ tmux new -d "node index.js"
 - `IN_MEMORY` - Store temporary data in memory (RAM) instead of disk.
 - `LOG_ABOUT_RELAYS` - Whenever to log about relay connections
 
+## Docker
+### Quick Run
+```
+git clone https://github.com/mroxso/bostr
+cd bostr
+docker build -t bostr:local .
+docker run --rm --name bostr -p 8080:8080 -v ./config.js:/usr/src/app/config.js bostr:local
+```
+
 ## License
 
 Copyright 2023 Yonle <yonle@lecturify.net>
