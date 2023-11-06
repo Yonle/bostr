@@ -5,7 +5,8 @@ const socks = new Set();
 const sess = new SQLite((process.env.IN_MEMORY || tmp_store != "disk") ? null : (__dirname + "/../.temporary.db"));
 const csess = new Map();
 
-const pendingEOSE = new Map();
+const pendingEOSE = new Map(); // per sessID
+const reqLimit = new Map(); // per sessID
 
 // Handle database....
 sess.unsafeMode(true);
@@ -42,12 +43,14 @@ module.exports = (ws, req) => {
         bc(data);
         sess.prepare("INSERT INTO sess VALUES (?, ?, ?);").run(ws.id, data[1], JSON.stringify(data[2]));
         pendingEOSE.set(data[1], 0);
+        reqLimit.set(data[1], data[2]?.limit);
         break;
       case "CLOSE":
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
         data[1] = ws.id + ":" + data[1];
         bc(data);
         pendingEOSE.delete(data[1]);
+        reqLimit.delete(data[1]);
         sess.prepare("DELETE FROM sess WHERE cID = ? AND subID = ?;").run(ws.id, data[1]);
         sess.prepare("DELETE FROM events WHERE cID = ? AND subID = ?;").run(ws.id, data[1]);
         break;
@@ -65,6 +68,7 @@ module.exports = (ws, req) => {
     for (i of sess.prepare("SELECT subID FROM sess WHERE cID = ?").iterate(ws.id)) {
       bc(["CLOSE", i.subID]);
       pendingEOSE.delete(i.subID);
+      reqLimit.delete(i.subID);
     }
 
     sess.prepare("DELETE FROM sess WHERE cID = ?;").run(ws.id);
@@ -93,7 +97,6 @@ function newConn(addr) {
     for (i of sess.prepare("SELECT subID, filter FROM sess").iterate()) {
       if (relay.readyState >= 2) break;
       relay.send(JSON.stringify(["REQ", i.subID, JSON.parse(i.filter)]));
-      if (!pendingEOSE.has(i.subID)) pendingEOSE.set(i.subID, 0);
     }
   });
 
@@ -121,6 +124,23 @@ function newConn(addr) {
         sess.prepare("INSERT INTO events VALUES (?, ?, ?);").run(cID, subID, data[2]?.id);
         data[1] = sID;
         csess.get(cID)?.send(JSON.stringify(data));
+
+        // Now count for REQ limit requested by client.
+        // If it's at the limit, Send EOSE to client and delete pendingEOSE of subID
+
+        // Skip if EOSE has been omitted
+        if (!pendingEOSE.has(subID)) return;
+
+        const remainingEvents = reqLimit.get(subID);
+
+        if (remainingEvents) reqLimit.set(subID, remainingEvents-1);
+        if (!remainingEvents) {
+          // Once there are no remaining event, Do the instructed above.
+          csess.get(cID)?.send(JSON.stringify(["EOSE", sID]));
+          pendingEOSE.delete(subID);
+          reqLimit.delete(subID);
+        }
+
         break;
       }
       case "EOSE": {
@@ -138,6 +158,7 @@ function newConn(addr) {
 
         csess.get(cID)?.send(JSON.stringify(["EOSE", sID]));
         pendingEOSE.delete(subID);
+        reqLimit.delete(subID);
         break;
       }
     }
