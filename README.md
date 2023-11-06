@@ -15,7 +15,7 @@ This project serve the purpose as a bouncer to reduce client bandwidth usage.
 ![How it works](img/how_it_works.png)
 
 ## Installation
-- NodeJS (+v14)
+- [NodeJS](https://nodejs.org) (v16 or up)
 - Libsqlite installed in your system
 - A fast internet connection
 
