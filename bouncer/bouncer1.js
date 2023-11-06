@@ -131,9 +131,13 @@ function newConn(addr) {
         // Skip if EOSE has been omitted
         if (!pendingEOSE.has(subID)) return;
 
-        const remainingEvents = reqLimit.get(subID);
+        let remainingEvents = reqLimit.get(subID);
 
-        if (remainingEvents) reqLimit.set(subID, remainingEvents-1);
+        if (remainingEvents) {
+          remainingEvents--;
+          reqLimit.set(subID, remainingEvents);
+        }
+
         if (!remainingEvents) {
           // Once there are no remaining event, Do the instructed above.
           csess.get(cID)?.send(JSON.stringify(["EOSE", sID]));
