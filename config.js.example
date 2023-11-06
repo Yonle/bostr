@@ -8,8 +8,8 @@ module.exports = {
 
   // Bouncing mode
   // 1 -> Fast. Bouncer connects to <relays> at startup.
-  // 2 -> Accurate. Every clients has their own sessions.
-  mode: 1,
+  // 2 -> Accurate. Every clients has their own sessions (recommended).
+  mode: 2,
 
   // Clusters.
   clusters: 1,

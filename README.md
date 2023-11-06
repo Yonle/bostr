@@ -52,6 +52,8 @@ docker build -t bostr:local .
 docker run --rm --name bostr -p 8080:8080 -v ./config.js:/usr/src/app/config.js bostr:local
 ```
 
+**Note:** You will need to edit `config.js` before running the bouncer.
+
 ## License
 
 Copyright 2023 Yonle <yonle@lecturify.net>
