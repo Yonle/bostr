@@ -1,8 +1,8 @@
 # Bostr
-A nostr bouncer for reducing client bandwidth.
+A nostr relay bouncer.
 
 ## What is this?
-It's a bouncer for Nostr relays
+**Bostr** is a multi nostr relay proxy that were serving in a server that act like an normal nostr relay.
 
 ## Why?
 Nostr relays is bunch of dummy servers and usually connects to more than 5-10 relays to work properly.
