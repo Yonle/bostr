@@ -104,7 +104,11 @@ function terminate_sess(id) {
 // WS - Sessions
 function newConn(addr, id) {
   if (!csess.has(id)) return;
-  const relay = new WebSocket(addr);
+  const relay = new WebSocket(addr, {
+    headers: {
+      "User-Agent": "Bostr; The nostr relay bouncer; https://github.com/Yonle/bostr"
+    }
+  });
 
   relay.id = id;
   relay.addr = addr;

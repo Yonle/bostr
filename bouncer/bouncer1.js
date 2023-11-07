@@ -88,7 +88,11 @@ function bc(msg) {
 
 // WS - Sessions
 function newConn(addr) {
-  const relay = new WebSocket(addr);
+  const relay = new WebSocket(addr, {
+    headers: {
+      "User-Agent": "Bostr; The nostr relay bouncer; https://github.com/Yonle/bostr"
+    }
+  });
 
   relay.addr = addr;
   relay.on('open', _ => {
