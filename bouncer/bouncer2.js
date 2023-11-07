@@ -147,7 +147,7 @@ function newConn(addr, id) {
           reqLimit.set(subID, remainingEvents);
         }
 
-        if (!remainingEvents) {
+        if (remainingEvents < 1) {
           // Once there are no remaining event, Do the instructed above.
           csess.get(id)?.send(JSON.stringify(["EOSE", data[1]]));
           pendingEOSE.delete(subID);
