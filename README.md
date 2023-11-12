@@ -46,7 +46,7 @@ tmux new -d "node index.js"
 ## Docker
 ### Quick Run
 ```
-git clone https://github.com/mroxso/bostr
+git clone https://github.com/Yonle/bostr
 cd bostr
 docker build -t bostr:local .
 docker run --rm --name bostr -p 8080:8080 -v ./config.js:/usr/src/app/config.js bostr:local
