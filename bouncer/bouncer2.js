@@ -7,7 +7,7 @@ const csess = new Map();
 
 const pendingEOSE = new Map(); // per sessID
 const reqLimit = new Map(); // per sessID
-const searchQuery = new Map();
+const searchQuery = new Map(); // per sessID
 
 // Handle database....
 sess.unsafeMode(true);
