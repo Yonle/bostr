@@ -41,6 +41,7 @@ module.exports = (ws, req) => {
         // eventname -> 1_eventname
         bc(data, ws.id);
         sess.prepare("INSERT INTO sess VALUES (?, ?, ?);").run(ws.id, data[1], JSON.stringify(data[2]));
+        if (data[2]?.limit < 1) return ws.send(JSON.stringify(["EOSE", data[1]]));
         pendingEOSE.set(ws.id + ":" + data[1], 0);
         reqLimit.set(ws.id + ":" + data[1], data[2]?.limit);
         break;
