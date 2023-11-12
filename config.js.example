@@ -12,7 +12,7 @@ module.exports = {
   mode: 2,
 
   // Clusters.
-  clusters: 1,
+  clusters: 4,
 
   // Whenever store temporary data in memory (RAM) or in a disk
   // Options: disk, memory
@@ -28,7 +28,10 @@ module.exports = {
     "description": "Nostr Bouncer Server",
     "name": "Bostr",
     "software": "git+https://github.com/Yonle/bostr",
-    "supported_nips": [1],
+
+    // Some nostr client may read the following for compatibility check.
+    // You may change the supported_nips when needed.
+    "supported_nips": [1,9,11,12,15,16,20,22,26,28,33,40],
     "version": "1.0.0"
   },
 
