@@ -7,6 +7,7 @@ const csess = new Map();
 
 const pendingEOSE = new Map(); // per sessID
 const reqLimit = new Map(); // per sessID
+const searchQuery = new Map();
 
 // Handle database....
 sess.unsafeMode(true);
@@ -44,6 +45,7 @@ module.exports = (ws, req) => {
         // eventname -> 1_eventname
         bc(data);
         sess.prepare("INSERT INTO sess VALUES (?, ?, ?);").run(ws.id, data[1], JSON.stringify(data[2]));
+        if (data[2]?.search) searchQuery.set(data[1], data[2]?.search);
         if (data[2]?.limit < 1) return ws.send(JSON.stringify(["EOSE", data[1].split(":")[1]]));
         pendingEOSE.set(data[1], 0);
         reqLimit.set(data[1], data[2]?.limit);
@@ -54,6 +56,7 @@ module.exports = (ws, req) => {
         bc(data);
         pendingEOSE.delete(data[1]);
         reqLimit.delete(data[1]);
+        searchQuery.delete(data[1]);
         sess.prepare("DELETE FROM sess WHERE cID = ? AND subID = ?;").run(ws.id, data[1]);
         sess.prepare("DELETE FROM events WHERE cID = ? AND subID = ?;").run(ws.id, data[1]);
         break;
@@ -72,6 +75,7 @@ module.exports = (ws, req) => {
       bc(["CLOSE", i.subID]);
       pendingEOSE.delete(i.subID);
       reqLimit.delete(i.subID);
+      searchQuery.delete(i.subID);
     }
 
     sess.prepare("DELETE FROM sess WHERE cID = ?;").run(ws.id);
@@ -131,7 +135,9 @@ function newConn(addr) {
          */
         const cID = args[0];
         const sID = args.slice(1).join(":");
+        const NotInSearchQuery = searchQuery.has(subID) && !data[2]?.content?.toLowerCase()?.includes(searchQuery.get(subID).toLowerCase());
 
+        if (NotInSearchQuery) return;
         if (!sess.prepare("SELECT * FROM sess WHERE cID = ? AND subID = ?;").get(cID, subID)) return relay.send(JSON.stringify(["CLOSE", subID]));
         if (sess.prepare("SELECT * FROM events WHERE cID = ? AND subID = ? AND eID = ?;").get(cID, subID, data[2]?.id)) return; // No need to transmit once it has been transmitted before.
 

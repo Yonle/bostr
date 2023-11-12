@@ -7,6 +7,7 @@ const csess = new Map();
 
 const pendingEOSE = new Map(); // per sessID
 const reqLimit = new Map(); // per sessID
+const searchQuery = new Map();
 
 // Handle database....
 sess.unsafeMode(true);
@@ -43,6 +44,7 @@ module.exports = (ws, req) => {
         // eventname -> 1_eventname
         bc(data, ws.id);
         sess.prepare("INSERT INTO sess VALUES (?, ?, ?);").run(ws.id, data[1], JSON.stringify(data[2]));
+        if (data[2]?.search) searchQuery.set(ws.id + ":" + data[1], data[2]?.search);
         if (data[2]?.limit < 1) return ws.send(JSON.stringify(["EOSE", data[1]]));
         pendingEOSE.set(ws.id + ":" + data[1], 0);
         reqLimit.set(ws.id + ":" + data[1], data[2]?.limit);
@@ -52,6 +54,7 @@ module.exports = (ws, req) => {
         bc(data, ws.id);
         pendingEOSE.delete(ws.id + ":" + data[1]);
         reqLimit.delete(ws.id + ":" + data[1]);
+        searchQuery.delete(ws.id + ":" + data[1]);
         sess.prepare("DELETE FROM sess WHERE cID = ? AND subID = ?;").run(ws.id, data[1]);
         sess.prepare("DELETE FROM events WHERE cID = ? AND subID = ?;").run(ws.id, data[1]);
         break;
@@ -96,12 +99,17 @@ function terminate_sess(id) {
 
   for (sub of pendingEOSE) {
     if (!sub[0].startsWith(id)) continue;
-    pendingEOSE.delete(id);
+    pendingEOSE.delete(sub[0]);
   }
 
   for (sub of reqLimit) {
     if (!sub[0].startsWith(id)) continue;
-    reqLimit.delete(id);
+    reqLimit.delete(sub[0]);
+  }
+
+  for (sub of searchQuery) {
+    if (!sub[0].startsWith(id)) continue;
+    searchQuery.delete(sub[0]);
   }
 }
 
@@ -141,6 +149,9 @@ function newConn(addr, id) {
     switch (data[0]) {
       case "EVENT": {
         if (data.length < 3 || typeof(data[1]) !== "string" || typeof(data[2]) !== "object") return;
+        const NotInSearchQuery = searchQuery.has(id + ":" + data[1]) && !data[2]?.content?.toLowerCase()?.includes(searchQuery.get(id + ":" + data[1]).toLowerCase());
+
+        if (NotInSearchQuery) return;
         if (!sess.prepare("SELECT * FROM sess WHERE cID = ? AND subID = ?;").get(id, data[1])) return;
         if (sess.prepare("SELECT * FROM events WHERE cID = ? AND subID = ? AND eID = ?;").get(id, data[1], data[2]?.id)) return; // No need to transmit once it has been transmitted before.
 
