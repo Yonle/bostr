@@ -14,6 +14,7 @@ sess.unsafeMode(true);
 // Temporary database.
 sess.exec("CREATE TABLE IF NOT EXISTS sess (cID TEXT, subID TEXT, filter TEXT);");
 sess.exec("CREATE TABLE IF NOT EXISTS events (cID TEXT, subID TEXT, eID TEXT);"); // To prevent transmitting duplicates
+sess.exec("CREATE TABLE IF NOT EXISTS recentEvents (cID TEXT, data TEXT);");
 
 // CL - User socket
 module.exports = (ws, req) => {
@@ -32,6 +33,7 @@ module.exports = (ws, req) => {
     switch (data[0]) {
       case "EVENT":
         if (!data[1]?.id) return ws.send(JSON.stringify(["NOTICE", "error: no event id."]));
+        sess.prepare("INSERT INTO recentEvents VALUES (?, ?);").run(ws.id, JSON.stringify(data));
         bc(data);
         ws.send(JSON.stringify(["OK", data[1]?.id, true, ""]));
         break;
@@ -74,6 +76,7 @@ module.exports = (ws, req) => {
 
     sess.prepare("DELETE FROM sess WHERE cID = ?;").run(ws.id);
     sess.prepare("DELETE FROM events WHERE cID = ?;").run(ws.id);
+    sess.prepare("DELETE FROM recentEvents WHERE cID = ?;").run(ws.id);
   });
 
   csess.set(ws.id, ws);
@@ -99,6 +102,12 @@ function newConn(addr) {
   relay.on('open', _ => {
     socks.add(relay); // Add this socket session to [socks]
     if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.log(process.pid, "---", `[${socks.size}/${relays.length}]`, relay.addr, "is connected");
+
+    for (i of sess.prepare("SELECT data FROM recentEvents;").iterate()) {
+      if (relay.readyState >= 2) break;
+      relay.send(i.data);
+    }
+
     for (i of sess.prepare("SELECT subID, filter FROM sess").iterate()) {
       if (relay.readyState >= 2) break;
       relay.send(JSON.stringify(["REQ", i.subID, JSON.parse(i.filter)]));
