@@ -2,21 +2,21 @@
 A nostr relay bouncer.
 
 ## What is this?
-**Bostr** is a multi nostr relay proxy that were serving in a server that act like an normal nostr relay.
+**Bostr** is a multi nostr relay **proxy** that were serving as a nostr relay.
 
 ## Why?
-Nostr relays is bunch of dummy servers and usually connects to more than 5-10 relays to work properly.
+Nostr relays is a bunch of dummy servers that store user events. Normally nostr clients usually connects to more than 5-10 relays to receive and transmit events.
 
-Due to it is nature to connect to more than two or three relays, This caused a issue such as mobile data bandwidth drained drastically, and similiar
+Due to it's nature that connects to more than just a single relay, **Client bandwidth usage is high.** And because of this, Nostr bandwidth usage is not really recommended for some users, notably **mobile data users.**
 
-This project serve the purpose as a bouncer to reduce client bandwidth usage.
+This project solve the problem by **reducing** the number of connected relays, at the same time **proxying** multiple relays in a single socket to nostr client.
 
 ## How it works?
 ![How it works](img/how_it_works.png)
 
 ## Installation
 - [NodeJS](https://nodejs.org) (v16 or up)
-- Libsqlite installed in your system
+- libsqlite installed in your system
 - A fast internet connection
 
 ```
