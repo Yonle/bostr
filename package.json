@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/Yonle/bostr#readme",
   "dependencies": {
-    "better-sqlite3": "^9.0.0",
+    "better-sqlite3": "^9.1.1",
     "ws": "^8.14.2"
   },
   "engines": {
