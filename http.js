@@ -22,6 +22,9 @@ server.on('request', (req, res) => {
     }).end(JSON.stringify(config.server_meta));
 
   if (req.url === "/") {
+    res.writeHead(200, {
+      "Content-Type": "text/plain"
+    });
     res.write("Hello. This nostr bouncer (bostr) is bouncing the following relays:\n\n");
     config.relays.forEach(_ => {
       res.write("- " + _ + "\n");
