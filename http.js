@@ -15,9 +15,10 @@ const wss = new WebSocket.WebSocketServer({ noServer: true });
 server.on('request', (req, res) => {
   log(`${req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address} - ${req.method} ${req.url}`)
 
-  if (req.headers.accept?.includes("nostr"))
+  if (req.headers.accept?.includes("application/nostr+json"))
     return res.writeHead(200, {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*"
     }).end(JSON.stringify(config.server_meta));
 
   if (req.url === "/") {
