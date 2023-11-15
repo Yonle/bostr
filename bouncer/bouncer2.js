@@ -76,9 +76,6 @@ module.exports = (ws, req) => {
     terminate_sess(ws.id);
   });
 
-  // Chill down first buddy....
-  ws.pause();
-
   csess.set(ws.id, ws);
   relays.forEach(_ => newConn(_, ws.id));
 }
@@ -129,7 +126,6 @@ function newConn(addr, id) {
   relay.on('open', _ => {
     socks.add(relay); // Add this socket session to [socks]
     if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.log(process.pid, "---", `[${id}] [${socks.size}/${relays.length*csess.size}]`, relay.url, "is connected");
-    if (csess.get(id)?.isPaused) csess.get(id).resume();
 
     for (i of sess.prepare("SELECT data FROM recentEvents WHERE cID = ?;").iterate(id)) {
       if (relay.readyState >= 2) break;
