@@ -31,7 +31,7 @@ module.exports = {
 
     // Some nostr client may read the following for compatibility check.
     // You may change the supported_nips to match with what your relays supported.
-    "supported_nips": [1,9,11,12,15,16,20,22,26,28,33,40,50],
+    "supported_nips": [1,2,9,11,12,15,16,20,22,33,40,50]
     "version": "1.0.0"
   },
 
