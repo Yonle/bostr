@@ -102,10 +102,9 @@ function newConn(addr) {
     }
   });
 
-  relay.addr = addr;
   relay.on('open', _ => {
     socks.add(relay); // Add this socket session to [socks]
-    if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.log(process.pid, "---", `[${socks.size}/${relays.length}]`, relay.addr, "is connected");
+    if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.log(process.pid, "---", `[${socks.size}/${relays.length}]`, relay.url, "is connected");
 
     for (i of sess.prepare("SELECT data FROM recentEvents;").iterate()) {
       if (relay.readyState >= 2) break;
@@ -189,11 +188,11 @@ function newConn(addr) {
   });
 
   relay.on('error', _ => {
-    if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.error(process.pid, "-!-", relay.addr, _.toString());
+    if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.error(process.pid, "-!-", relay.url, _.toString());
   });
   relay.on('close', _ => {
     socks.delete(relay) // Remove this socket session from [socks] list
-    if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.log(process.pid, "-!-", `[${socks.size}/${relays.length}]`, "Disconnected from", relay.addr);
+    if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.log(process.pid, "-!-", `[${socks.size}/${relays.length}]`, "Disconnected from", relay.url);
 
     setTimeout(_ => newConn(addr), 5000); // As a bouncer server, We need to reconnect.
   });
