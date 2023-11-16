@@ -39,7 +39,7 @@ module.exports = {
 
   // Warning: Ensure that <authorized_keys> is NOT empty so only <authorized_keys> could access this bostr bouncer
   private_keys: {
-    // "pubkey": "privatekey"
+    // "pubkey-in-hex": "privatekey"
   }
 
   // Server information.
