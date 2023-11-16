@@ -25,7 +25,7 @@ cd bostr
 npm i
 ```
 
-Rename `config.js.example` as `config.js`, Start editing the file and fill some required fields accordingly to your needs.
+Rename `config.js.example` as `config.js`, Start editing the file and fill some required fields accordingly to your needs. You could either run it for everyone or only for yourself.
 
 ## Running
 ```

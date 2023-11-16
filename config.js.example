@@ -7,8 +7,8 @@ module.exports = {
   port: "8080",
 
   // Bouncing mode
-  // 1 -> Fast. Bouncer connects to <relays> at startup.
-  // 2 -> Accurate. Every clients has their own sessions (recommended).
+  // 1 -> Fast. Bouncer connects to <relays> at startup. Useful for bots
+  // 2 -> Accurate. Every clients has their own sessions. Useful for normal users (recommended)
   mode: 2,
 
   // Clusters.
@@ -21,6 +21,27 @@ module.exports = {
   // Log about bouncer connection with relays? 
   log_about_relays: false,
 
+  // For personal usage. Leaving this empty allows everyone to use this bostr instance.
+  // NOTE: Requires NIP-42 on client.
+  authorized_keys: [
+    // "pubkey-in-hex",
+    // "npub ....",
+    // ....
+  ],
+
+  // For personal usage. Leaving this empty completely disables NIP-42 function.
+  // Private key of authorized user. It could be your key.
+  // NOTE:
+  // - NIP-42 (auth) is ONLY supported with provided <private_keys>
+  // - While both mode could interact with NIP-42 relays,
+  //   - It's best to use Mode 2 if you have more than <private_keys>
+  //   - Mode 1 could only work with ONE <private_keys>
+
+  // Warning: Ensure that <authorized_keys> is NOT empty so only <authorized_keys> could access this bostr bouncer
+  private_keys: {
+    // "pubkey": "privatekey"
+  }
+
   // Server information.
   // Only for when nostr client requesting server information.
   server_meta: {
@@ -31,7 +52,7 @@ module.exports = {
 
     // Some nostr client may read the following for compatibility check.
     // You may change the supported_nips to match with what your relays supported.
-    "supported_nips": [1,2,9,11,12,15,16,20,22,33,40,50]
+    "supported_nips": [1,2,9,11,12,15,16,20,22,33,40,42,50]
     "version": "1.0.0"
   },
 

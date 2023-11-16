@@ -1,6 +1,11 @@
 const SQLite = require("better-sqlite3");
 const WebSocket = require("ws");
-const { relays, tmp_store, log_about_relays } = require("../config");
+const { validateEvent, nip19 } = require("nostr-tools");
+const auth = require("../auth.js");
+const nip42 = require("../nip42.js");
+
+let { relays, tmp_store, log_about_relays, authorized_keys, private_keys } = require("../config");
+
 const socks = new Set();
 const sess = new SQLite((process.env.IN_MEMORY || tmp_store != "disk") ? null : (__dirname + "/../.temporary.db"));
 const csess = new Map();
@@ -17,9 +22,20 @@ sess.exec("CREATE TABLE IF NOT EXISTS sess (cID TEXT, subID TEXT, filter TEXT);"
 sess.exec("CREATE TABLE IF NOT EXISTS events (cID TEXT, subID TEXT, eID TEXT);"); // To prevent transmitting duplicates
 sess.exec("CREATE TABLE IF NOT EXISTS recentEvents (cID TEXT, data TEXT);");
 
+authorized_keys = authorized_keys?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
+
 // CL - User socket
 module.exports = (ws, req) => {
+  let authKey = null;
+  let authorized = true;
+
   ws.id = process.pid + Math.floor(Math.random() * 1000) + "_" + csess.size;
+
+  if (authorized_keys?.length) {
+    authKey = Date.now() + Math.random().toString(36);
+    authorized = false;
+    ws.send(JSON.stringify(["AUTH", authKey]));
+  }
 
   console.log(process.pid, `->- ${req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address} connected as ${ws.id}`);
   ws.on("message", data => {
@@ -33,7 +49,9 @@ module.exports = (ws, req) => {
 
     switch (data[0]) {
       case "EVENT":
-        if (!data[1]?.id) return ws.send(JSON.stringify(["NOTICE", "error: no event id."]));
+        if (!validateEvent(data[1])) return ws.send(JSON.stringify(["NOTICE", "error: invalid event"]));
+        if (data[1].kind == 22242) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rejected: kind 22242"]));
+        if (!authorized) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "unauthorized."]));
         sess.prepare("INSERT INTO recentEvents VALUES (?, ?);").run(ws.id, JSON.stringify(data));
         bc(data);
         ws.send(JSON.stringify(["OK", data[1]?.id, true, ""]));
@@ -41,6 +59,7 @@ module.exports = (ws, req) => {
       case "REQ":
         if (data.length < 3) return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
         if (typeof(data[2]) !== "object") return ws.send(JSON.stringify(["NOTICE", "expected filter to be obj, instead gives the otherwise."]));
+        if (!authorized) return ws.send(JSON.stringify(["NOTICE", "unauthorized."]));
         data[1] = ws.id + ":" + data[1];
         // eventname -> 1_eventname
         bc(data);
@@ -52,6 +71,7 @@ module.exports = (ws, req) => {
         break;
       case "CLOSE":
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
+        if (!authorized) return ws.send(JSON.stringify(["NOTICE", "unauthorized."]));
         data[1] = ws.id + ":" + data[1];
         bc(data);
         pendingEOSE.delete(data[1]);
@@ -59,6 +79,12 @@ module.exports = (ws, req) => {
         searchQuery.delete(data[1]);
         sess.prepare("DELETE FROM sess WHERE cID = ? AND subID = ?;").run(ws.id, data[1]);
         sess.prepare("DELETE FROM events WHERE cID = ? AND subID = ?;").run(ws.id, data[1]);
+        break;
+      case "AUTH":
+        if (auth(authKey, authorized, authorized_keys, data[1], ws, req)) {
+          ws.pubkey = data[1].pubkey;
+          authorized = true;
+        }
         break;
       default:
         console.warn(process.pid, "---", "Unknown command:", data.join(" "));
@@ -182,6 +208,12 @@ function newConn(addr) {
         csess.get(cID)?.send(JSON.stringify(["EOSE", sID]));
         pendingEOSE.delete(subID);
         reqLimit.delete(subID);
+        break;
+      }
+      case "AUTH": {
+        if (!private_keys || typeof(data[1]) !== "string") return;
+        const pubkey = authorized_keys[0];
+        nip42(relay, pubkey, private_keys[pubkey], data[1]);
         break;
       }
     }
