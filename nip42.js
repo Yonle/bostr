@@ -1,7 +1,9 @@
-const { getEventHash, getSignature } = require("nostr-tools");
+const { getEventHash, getSignature, nip19 } = require("nostr-tools");
 
 module.exports = (relay, pubkey, privkey, challenge) => {
   if (!privkey) return;
+  if (privkey.startsWith("nsec")) privkey = nip19.decode(privkey).data;
+
   let signed_challenge = {
     pubkey,
     created_at: Math.floor(Date.now() / 1000),

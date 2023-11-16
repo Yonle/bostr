@@ -39,8 +39,13 @@ module.exports = {
 
   // Warning: Ensure that <authorized_keys> is NOT empty so only <authorized_keys> could access this bostr bouncer
   private_keys: {
-    // "pubkey-in-hex": "privatekey"
+    // "pubkey-in-hex": "privatekey",
+    // "pubkey-in-hex": "nsec ...."
   }
+  // Tip: If you want to convert your pubkey/privatekey to hex,
+  //      You could run the following command:
+  //        $ node hexconverter.js npub....
+  //        $ node hexconverter.js nsec....
 
   // Server information.
   // Only for when nostr client requesting server information.
