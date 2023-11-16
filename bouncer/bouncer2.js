@@ -82,6 +82,7 @@ module.exports = (ws, req) => {
         if (auth(authKey, authorized, authorized_keys, data[1], ws, req)) {
           ws.pubkey = data[1].pubkey;
           authorized = true;
+          relays.forEach(_ => newConn(_, ws.id));
         }
         break;
       default:
@@ -103,7 +104,7 @@ module.exports = (ws, req) => {
   });
 
   csess.set(ws.id, ws);
-  relays.forEach(_ => newConn(_, ws.id));
+  if (authorized) relays.forEach(_ => newConn(_, ws.id));
 }
 
 // WS - Broadcast message to every existing sockets
