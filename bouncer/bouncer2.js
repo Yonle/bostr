@@ -49,17 +49,17 @@ module.exports = (ws, req) => {
 
     switch (data[0]) {
       case "EVENT":
+        if (!authorized) return;
         if (!validateEvent(data[1])) return ws.send(JSON.stringify(["NOTICE", "error: invalid event"]));
         if (data[1].kind == 22242) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rejected: kind 22242"]));
-        if (!authorized) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "unauthorized."]));
         sess.prepare("INSERT INTO recentEvents VALUES (?, ?);").run(ws.id, JSON.stringify(data));
         bc(data, ws.id);
         ws.send(JSON.stringify(["OK", data[1]?.id, true, ""]));
         break;
       case "REQ":
+        if (!authorized) return;
         if (data.length < 3) return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
         if (typeof(data[2]) !== "object") return ws.send(JSON.stringify(["NOTICE", "expected filter to be obj, instead gives the otherwise."]));
-        if (!authorized) return ws.send(JSON.stringify(["NOTICE", "unauthorized."]));
         // eventname -> 1_eventname
         bc(data, ws.id);
         sess.prepare("INSERT INTO sess VALUES (?, ?, ?);").run(ws.id, data[1], JSON.stringify(data[2]));
@@ -69,8 +69,8 @@ module.exports = (ws, req) => {
         reqLimit.set(ws.id + ":" + data[1], data[2]?.limit);
         break;
       case "CLOSE":
+        if (!authorized) return;
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
-        if (!authorized) return ws.send(JSON.stringify(["NOTICE", "unauthorized."]));
         bc(data, ws.id);
         pendingEOSE.delete(ws.id + ":" + data[1]);
         reqLimit.delete(ws.id + ":" + data[1]);
@@ -97,6 +97,7 @@ module.exports = (ws, req) => {
     console.log(process.pid, "---", "Sock", ws.id, "has disconnected.");
     csess.delete(ws.id);
 
+    if (!authorized) return;
     sess.prepare("DELETE FROM sess WHERE cID = ?;").run(ws.id);
     sess.prepare("DELETE FROM events WHERE cID = ?;").run(ws.id);
     sess.prepare("DELETE FROM recentEvents WHERE cID = ?;").run(ws.id);

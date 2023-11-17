@@ -49,17 +49,17 @@ module.exports = (ws, req) => {
 
     switch (data[0]) {
       case "EVENT":
+        if (!authorized) return;
         if (!validateEvent(data[1])) return ws.send(JSON.stringify(["NOTICE", "error: invalid event"]));
         if (data[1].kind == 22242) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rejected: kind 22242"]));
-        if (!authorized) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "unauthorized."]));
         sess.prepare("INSERT INTO recentEvents VALUES (?, ?);").run(ws.id, JSON.stringify(data));
         bc(data);
         ws.send(JSON.stringify(["OK", data[1]?.id, true, ""]));
         break;
       case "REQ":
+        if (!authorized) return;
         if (data.length < 3) return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
         if (typeof(data[2]) !== "object") return ws.send(JSON.stringify(["NOTICE", "expected filter to be obj, instead gives the otherwise."]));
-        if (!authorized) return ws.send(JSON.stringify(["NOTICE", "unauthorized."]));
         data[1] = ws.id + ":" + data[1];
         // eventname -> 1_eventname
         bc(data);
@@ -70,8 +70,8 @@ module.exports = (ws, req) => {
         reqLimit.set(data[1], data[2]?.limit);
         break;
       case "CLOSE":
+        if (!authorized) return;
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
-        if (!authorized) return ws.send(JSON.stringify(["NOTICE", "unauthorized."]));
         data[1] = ws.id + ":" + data[1];
         bc(data);
         pendingEOSE.delete(data[1]);
@@ -97,6 +97,8 @@ module.exports = (ws, req) => {
   ws.on('close', _ => {
     console.log(process.pid, "---", "Sock", ws.id, "has disconnected.");
     csess.delete(ws.id);
+
+    if (!authorized) return;
     for (i of sess.prepare("SELECT subID FROM sess WHERE cID = ?").iterate(ws.id)) {
       bc(["CLOSE", i.subID]);
       pendingEOSE.delete(i.subID);
