@@ -1,6 +1,6 @@
 {
   "name": "bostr",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Nostr Bouncer server",
   "main": "index.js",
   "scripts": {
@@ -14,7 +14,8 @@
   "keywords": [
     "nostr",
     "bouncer",
-    "websocket"
+    "websocket",
+    "proxy"
   ],
   "author": "Yonle <yonle@lecturify.net>",
   "license": "BSD-3-Clause",
@@ -23,7 +24,6 @@
   },
   "homepage": "https://github.com/Yonle/bostr#readme",
   "dependencies": {
-    "better-sqlite3": "^9.1.1",
     "nostr-tools": "^1.17.0",
     "ws": "^8.14.2"
   },

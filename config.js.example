@@ -6,20 +6,14 @@ module.exports = {
   address: "0.0.0.0",
   port: "8080",
 
-  // Bouncing mode
-  // 1 -> Fast. Bouncer connects to <relays> at startup. Useful for bots
-  // 2 -> Accurate. Every clients has their own sessions. Useful for normal users (recommended)
-  mode: 2,
-
   // Clusters.
   clusters: 4,
 
-  // Whenever store temporary data in memory (RAM) or in a disk
-  // Options: disk, memory
-  tmp_store: "memory",
-
   // Log about bouncer connection with relays? 
   log_about_relays: false,
+
+  // Time before reconnect to relays in miliseconds.
+  reconnect_time: 5000,
 
   // For personal usage. Leaving this empty allows everyone to use this bostr instance.
   // NOTE: Requires NIP-42 on client.

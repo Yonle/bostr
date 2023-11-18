@@ -1,8 +1,7 @@
 const WebSocket = require("ws");
 const config = require("./config");
 const http = require("http");
-
-const handleBouncer = require(`./bouncer/bouncer${config?.mode || 1}.js`);
+const bouncer = require(`./bouncer.js`);
 
 // For log
 const curD = _ => (new Date()).toLocaleString("ia");
@@ -40,7 +39,7 @@ server.on('request', (req, res) => {
 });
 
 server.on('upgrade', (req, sock, head) => {
-  wss.handleUpgrade(req, sock, head, _ => handleBouncer(_, req));
+  wss.handleUpgrade(req, sock, head, _ => bouncer(_, req));
 });
 
 const listened = server.listen(process.env.PORT || config.port, config.address || "0.0.0.0", _ => {

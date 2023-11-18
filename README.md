@@ -40,7 +40,6 @@ tmux new -d "node index.js"
 
 ## Environment Variable
 - `CLUSTERS` - Run Bostr with specified numbers of clusters.
-- `IN_MEMORY` - Store temporary data in memory (RAM) instead of disk.
 - `LOG_ABOUT_RELAYS` - Whenever to log about relay connections
 
 ## Docker
