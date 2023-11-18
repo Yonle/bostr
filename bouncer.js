@@ -3,7 +3,7 @@ const { validateEvent, nip19 } = require("nostr-tools");
 const auth = require("./auth.js");
 const nip42 = require("./nip42.js");
 
-let { relays, tmp_store, log_about_relays, authorized_keys, private_keys } = require("./config");
+let { relays, tmp_store, log_about_relays, authorized_keys, private_keys, reconnect_time } = require("./config");
 
 const socks = new Set();
 const csess = new Map();
@@ -188,6 +188,6 @@ function newConn(addr, id) {
     if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.log(process.pid, "-!-", `[${id}] [${socks.size}/${relays.length*csess.size}]`, "Disconnected from", relay.url);
 
     if (!csess.has(id)) return;
-    setTimeout(_ => newConn(addr, id), config.reconnect_time || 5000); // As a bouncer server, We need to reconnect.
+    setTimeout(_ => newConn(addr, id), reconnect_time || 5000); // As a bouncer server, We need to reconnect.
   });
 }
