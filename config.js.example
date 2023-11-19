@@ -26,13 +26,8 @@ module.exports = {
 
   // For personal usage. Leaving this empty completely disables NIP-42 function.
   // Private key of authorized user. It could be your key.
-  // NOTE:
-  // - NIP-42 (auth) is ONLY supported with provided <private_keys>
-  // - While both mode could interact with NIP-42 relays,
-  //   - It's best to use Mode 2 if you have more than <private_keys>
-  //   - Mode 1 could only work with ONE <private_keys>
-
-  // Warning: Ensure that <authorized_keys> is NOT empty so only <authorized_keys> could access this bostr bouncer
+  // NOTE: - NIP-42 (auth) is ONLY supported with provided <private_keys>
+  //       - Ensure that <authorized_keys> is NOT empty so only <authorized_keys> could access this server
   private_keys: {
     // "pubkey-in-hex": "privatekey",
     // "pubkey-in-hex": "nsec ...."
@@ -46,7 +41,7 @@ module.exports = {
   // Only for when nostr client requesting server information.
   server_meta: {
     "contact": "unset",
-    "description": "Nostr Bouncer Server",
+    "description": "Nostr relay bouncer",
     "name": "Bostr",
     "software": "git+https://github.com/Yonle/bostr",
 
