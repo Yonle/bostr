@@ -17,6 +17,7 @@ module.exports = (ws, req) => {
 
   ws.id = process.pid + Math.floor(Math.random() * 1000) + "_" + csess.size;
   ws.sess = new Map(); // contains filter submitted by clients. per subID
+  ws.hold_sess = new Map(); // hold events to be transmitted after reached over <filter.limit> until all relays send EOSE. per subID
   ws.events = new Map(); // only to prevent the retransmit of the same event. per subID
   ws.my_events = new Set(); // for event retransmitting.
   ws.pendingEOSE = new Map(); // each contain subID
@@ -64,6 +65,7 @@ module.exports = (ws, req) => {
         ws.sess.delete(data[1]);
         ws.events.delete(data[1]);
         ws.pendingEOSE.delete(data[1]);
+        ws.hold_sess.delete(data[1]);
         bc(data, ws.id);
         break;
       case "AUTH":
@@ -144,7 +146,7 @@ function newConn(addr, id) {
     switch (data[0]) {
       case "EVENT": {
         if (data.length < 3 || typeof(data[1]) !== "string" || typeof(data[2]) !== "object") return;
-        if (!client.sess.has(data[1])) return;
+        if (!client.sess.has(data[1]) || client.hold_sess.has(data[1])) return;
         const NotInSearchQuery = client.sess.get(data[1]).search && !data[2].content?.toLowerCase().includes(client.sess.get(data[1]).search?.toLowerCase());
 
         if (NotInSearchQuery) return;
@@ -159,9 +161,9 @@ function newConn(addr, id) {
         // Skip if EOSE has been omitted
         if (!client.pendingEOSE.has(data[1]) || !client.sess.get(data[1])?.limit) return;
         if (client.events.get(data[1]).size >= client.sess.get(data[1])?.limit) {
-          // Once there are no remaining event, Do the instructed above.
+          // Once reached to <filter.limit>, send EOSE to client, Hold till all relays send EOSE.
           client.send(JSON.stringify(["EOSE", data[1]]));
-          client.pendingEOSE.delete(data[1]);
+          client.hold_sess.add(data[1]);
         }
         break;
       }
@@ -169,8 +171,9 @@ function newConn(addr, id) {
         if (!client.pendingEOSE.has(data[1])) return;
         client.pendingEOSE.set(data[1], client.pendingEOSE.get(data[1]) + 1);
         if (client.pendingEOSE.get(data[1]) < Array.from(relays).filter(_ => _.id === id).length) return;
-        client.send(JSON.stringify(data));
         client.pendingEOSE.delete(data[1]);
+        if (client.hold_sess.has(data[1])) return client.hold_sess.delete(data[1]);
+        client.send(JSON.stringify(data));
         break;
       case "AUTH":
         if (!private_keys || typeof(data[1]) !== "string" || !client.pubkey) return;
