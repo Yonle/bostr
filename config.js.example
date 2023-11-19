@@ -17,7 +17,7 @@ module.exports = {
   reconnect_time: 5000,
 
   // For personal usage. Leaving this empty allows everyone to use this bostr instance.
-  // NOTE: Requires NIP-42 on client.
+  // NOTE: Require NIP-42 on client.
   authorized_keys: [
     // "pubkey-in-hex",
     // "npub ....",
