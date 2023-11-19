@@ -17,7 +17,7 @@ module.exports = (ws, req) => {
 
   ws.id = process.pid + Math.floor(Math.random() * 1000) + "_" + csess.size;
   ws.sess = new Map(); // contains filter submitted by clients. per subID
-  ws.hold_sess = new Map(); // hold events to be transmitted after reached over <filter.limit> until all relays send EOSE. per subID
+  ws.hold_sess = new Set(); // hold events to be transmitted after reached over <filter.limit> until all relays send EOSE. per subID
   ws.events = new Map(); // only to prevent the retransmit of the same event. per subID
   ws.my_events = new Set(); // for event retransmitting.
   ws.pendingEOSE = new Map(); // each contain subID
@@ -147,6 +147,11 @@ function newConn(addr, id) {
       case "EVENT": {
         if (data.length < 3 || typeof(data[1]) !== "string" || typeof(data[2]) !== "object") return;
         if (!client.sess.has(data[1]) || client.hold_sess.has(data[1])) return;
+
+        // if filter.since > receivedEvent.created_at, skip
+        // if receivedEvent.created_at > filter.until, skip
+        if (client.sess.get(data[1]).since > data[2].created_at) return;
+        if (data[2].created_at > client.sess.get(data[1]).until) return;
         const NotInSearchQuery = client.sess.get(data[1]).search && !data[2].content?.toLowerCase().includes(client.sess.get(data[1]).search?.toLowerCase());
 
         if (NotInSearchQuery) return;
