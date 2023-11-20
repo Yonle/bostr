@@ -1,6 +1,7 @@
 const { validateEvent, verifySignature } = require("nostr-tools");
+const { authorized_keys, private_keys } = require("./config");
 
-module.exports = (authKey, authorized, authorized_keys, data, ws, req) => {
+module.exports = (authKey, data, ws, req) => {
   if (!validateEvent(data)) {
     ws.send(JSON.stringify(["NOTICE", "error: invalid challenge response."]));
     return false;
@@ -11,18 +12,13 @@ module.exports = (authKey, authorized, authorized_keys, data, ws, req) => {
     return false;
   }
 
-  if (!authorized_keys.includes(data.pubkey)) {
+  if (!authorized_keys?.includes(data.pubkey) && !(private_keys && private_keys[data.pubkey])) {
     ws.send(JSON.stringify(["OK", data.id, false, "unauthorized."]));
     return false;
   }
 
   if (data.kind != 22242) {
     ws.send(JSON.stringify(["OK", data.id, false, "not kind 22242."]));
-    return false;
-  }
-
-  if (authorized) {
-    ws.send(JSON.stringify(["OK", data.id, false, "already authorized."]));
     return false;
   }
 
@@ -37,6 +33,6 @@ module.exports = (authKey, authorized, authorized_keys, data, ws, req) => {
     return false;
   }
 
-  ws.send(JSON.stringify(["OK", data.id, true, `Welcome ${data.pubkey}`]));
+  ws.send(JSON.stringify(["OK", data.id, true, `Hello ${data.pubkey}`]));
   return true;
 }

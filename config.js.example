@@ -16,7 +16,7 @@ module.exports = {
   // Time before reconnect to relays in miliseconds.
   reconnect_time: 5000,
 
-  // For personal usage. This is a whitelist of users public keys that could use this bouncer.
+  // A whitelist of users public keys who could use this bouncer.
   // Leaving this empty will allows everyone to use this bouncer.
   // NOTE: - Require NIP-42 compatible nostr client
   authorized_keys: [
@@ -25,10 +25,13 @@ module.exports = {
     // ....
   ],
 
-  // For personal usage. Used for authenticating NIP-42 relays to access certain events (such as kind 4, etc).
+  // Used for accessing NIP-42 protected events from certain relays.
   // It could be your key. Leaving this empty completely disables NIP-42 function.
-  // NOTE: - NIP-42 (auth) is ONLY supported with provided <private_keys>
-  //       - To use one of the following privatekeys, NIP-42 compatible nostr client is required.
+  //
+  // You could use this function even as a public bouncer.
+  // There are no security risk as it utilize NIP-42 to recognize client public key.
+  //
+  // NOTE: - Require NIP-42 compatible nostr client
   private_keys: {
     // "pubkey-in-hex": "privatekey",
     // "pubkey-in-hex": "nsec ...."
@@ -49,7 +52,7 @@ module.exports = {
     // Some nostr client may read the following for compatibility check.
     // You may change the supported_nips to match with what your relays supported.
     "supported_nips": [1,2,9,11,12,15,16,20,22,33,40,42,50],
-    "version": "1.0.0"
+    "version": require("./package.json").version
   },
 
   // Nostr relays to bounce [Required]

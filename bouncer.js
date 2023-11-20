@@ -26,6 +26,15 @@ module.exports = (ws, req) => {
     authKey = Date.now() + Math.random().toString(36);
     authorized = false;
     ws.send(JSON.stringify(["AUTH", authKey]));
+  } else if (private_keys !== {}) {
+    // If there is no whitelist, Then we ask to client what is their public key.
+    // We will enable NIP-42 function for this session if user pubkey was available & valid in <private_keys>.
+
+    // There is no need to limit this session. We only ask who is this user.
+    // If it was the users listed at <private_keys> in config.js, Then the user could use NIP-42 protected relays.
+
+    authKey = Date.now() + Math.random().toString(36);
+    ws.send(JSON.stringify(["AUTH", authKey]));
   }
 
   console.log(process.pid, `->- ${req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address} connected as ${ws.id}`);
@@ -69,10 +78,12 @@ module.exports = (ws, req) => {
         bc(data, ws.id);
         break;
       case "AUTH":
-        if (auth(authKey, authorized, authorized_keys, data[1], ws, req)) {
+        if (auth(authKey, data[1], ws, req)) {
           ws.pubkey = data[1].pubkey;
-          authorized = true;
+          console.log(process.pid, "---", ws.id, "succesfully authorized as", ws.pubkey, private_keys[ws.pubkey] ? "(admin)" : "(user)");
+          if (authorized) return;
           relays.forEach(_ => newConn(_, ws.id));
+          authorized = true;
         }
         break;
       default:
