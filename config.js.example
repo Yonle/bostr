@@ -16,18 +16,19 @@ module.exports = {
   // Time before reconnect to relays in miliseconds.
   reconnect_time: 5000,
 
-  // For personal usage. Leaving this empty allows everyone to use this bostr instance.
-  // NOTE: Require NIP-42 on client.
+  // For personal usage. This is a whitelist of users public keys that could use this bouncer.
+  // Leaving this empty will allows everyone to use this bouncer.
+  // NOTE: - Require NIP-42 compatible nostr client
   authorized_keys: [
     // "pubkey-in-hex",
     // "npub ....",
     // ....
   ],
 
-  // For personal usage. Leaving this empty completely disables NIP-42 function.
-  // Private key of authorized user. It could be your key.
+  // For personal usage. Used for authenticating NIP-42 relays to access certain events (such as kind 4, etc).
+  // It could be your key. Leaving this empty completely disables NIP-42 function.
   // NOTE: - NIP-42 (auth) is ONLY supported with provided <private_keys>
-  //       - Ensure that <authorized_keys> is NOT empty so only <authorized_keys> could access this server
+  //       - To use one of the following privatekeys, NIP-42 compatible nostr client is required.
   private_keys: {
     // "pubkey-in-hex": "privatekey",
     // "pubkey-in-hex": "nsec ...."
