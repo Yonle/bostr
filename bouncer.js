@@ -61,9 +61,9 @@ module.exports = (ws, req) => {
         if (data.length < 3) return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "expected subID a string. but got the otherwise."]));
         if (typeof(data[2]) !== "object") return ws.send(JSON.stringify(["NOTICE", "expected filter to be obj, instead gives the otherwise."]));
-        if (ws.subs.has(data[1])) return ws.send(JSON.stringify(["NOTICE", "The same subscription ID is already available."]));
         ws.subs.set(data[1], data[2]);
         ws.events.set(data[1], new Set());
+        ws.pause_subs.delete(data[1]);
         bc(data, ws.id);
         if (data[2]?.limit < 1) return ws.send(JSON.stringify(["EOSE", data[1]]));
         ws.pendingEOSE.set(data[1], 0);
