@@ -186,7 +186,7 @@ function newConn(addr, id) {
       case "EOSE":
         if (!client.pendingEOSE.has(data[1])) return;
         client.pendingEOSE.set(data[1], client.pendingEOSE.get(data[1]) + 1);
-        if (client.pendingEOSE.get(data[1]) < Array.from(relays).filter(_ => _.id === id).length) return;
+        if (client.pendingEOSE.get(data[1]) < Array.from(socks).filter(sock => sock.id === id).length) return;
         client.pendingEOSE.delete(data[1]);
         if (client.hold_sess.has(data[1])) return client.hold_sess.delete(data[1]);
         client.send(JSON.stringify(data));
