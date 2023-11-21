@@ -3,7 +3,7 @@ const { validateEvent, nip19 } = require("nostr-tools");
 const auth = require("./auth.js");
 const nip42 = require("./nip42.js");
 
-let { relays, tmp_store, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit } = require("./config");
+let { relays, tmp_store, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, eose_timeout } = require("./config");
 
 const socks = new Set();
 const csess = new Map();
@@ -21,6 +21,7 @@ module.exports = (ws, req) => {
   ws.events = new Map(); // only to prevent the retransmit of the same event. per subID
   ws.my_events = new Set(); // for event retransmitting.
   ws.pendingEOSE = new Map(); // each contain subID
+  ws.EOSETimeout = new Map(); // per subID
 
   if (authorized_keys?.length) {
     authKey = Date.now() + Math.random().toString(36);
@@ -75,6 +76,7 @@ module.exports = (ws, req) => {
         ws.events.delete(data[1]);
         ws.pendingEOSE.delete(data[1]);
         ws.pause_subs.delete(data[1]);
+        cancel_EOSETimeout(ws.id, data[1]);
         bc(data, ws.id);
         break;
       case "AUTH":
@@ -97,12 +99,44 @@ module.exports = (ws, req) => {
     console.log(process.pid, "---", "Sock", ws.id, "has disconnected.");
     csess.delete(ws.id);
 
+    for (i of ws.EOSETimeout) {
+      clearTimeout(i[1]);
+    }
+
     if (!authorized) return;
     terminate_subs(ws.id);
   });
 
   csess.set(ws.id, ws);
   if (authorized) relays.forEach(_ => newConn(_, ws.id));
+}
+
+// CL - Set up EOSE timeout
+function timeoutEOSE(id, subid) {
+  const c = csess.get(id);
+  if (!c) return;
+
+  clearTimeout(c.EOSETimeout.get(subid));
+  c.EOSETimeout.set(subid, setTimeout(_ => timed_out_eose(id, subid), eose_timeout || 2300));
+}
+
+// CL - Handle timed out EOSE
+function timed_out_eose(id, subid) {
+  const c = csess.get(id);
+  if (!c) return;
+  c.EOSETimeout.delete(subid);
+  if (!c.pendingEOSE.has(subid)) return;
+
+  c.pendingEOSE.delete(subid);
+  if (c.pause_subs.has(subid)) return c.pause_subs.delete(subid);
+  c.send(JSON.stringify(["EOSE", subid]));
+}
+
+function cancel_EOSETimeout(id, subid) {
+  const c = csess.get(id);
+  if (!c) return;
+  clearTimeout(c.EOSETimeout.get(subid));
+  c.EOSETimeout.delete(subid);
 }
 
 // WS - Broadcast message to every existing sockets
@@ -157,7 +191,9 @@ function newConn(addr, id) {
     switch (data[0]) {
       case "EVENT": {
         if (data.length < 3 || typeof(data[1]) !== "string" || typeof(data[2]) !== "object") return;
-        if (!client.subs.has(data[1]) || client.pause_subs.has(data[1])) return;
+        if (!client.subs.has(data[1])) return;
+        timeoutEOSE(id, data[1]);
+        if (client.pause_subs.has(data[1])) return;
 
         // if filter.since > receivedEvent.created_at, skip
         // if receivedEvent.created_at > filter.until, skip
@@ -192,6 +228,7 @@ function newConn(addr, id) {
         client.pendingEOSE.set(data[1], client.pendingEOSE.get(data[1]) + 1);
         if (wait_eose && (client.pendingEOSE.get(data[1]) < Array.from(socks).filter(sock => sock.id === id).length)) return;
         client.pendingEOSE.delete(data[1]);
+        cancel_EOSETimeout(data[1]);
         if (client.pause_subs.has(data[1])) return client.pause_subs.delete(data[1]);
         client.send(JSON.stringify(data));
         break;
