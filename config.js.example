@@ -23,7 +23,7 @@ module.exports = {
   // It may could cause loading problems in client due to slow EOSE from bouncer.
   wait_eose: false,
 
-  // Pause a subscription from receiving further events after reached to <filter.limit>
+  // Pause an subscription from receiving further events after reached to <filter.limit>
   // Could save client's bandwdith.
   //
   // Depending on <wait_eose> settings, It could either miss some events.
