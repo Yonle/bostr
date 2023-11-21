@@ -58,6 +58,7 @@ module.exports = {
   // Only for when nostr client requesting server information.
   server_meta: {
     "contact": "unset",
+    "pubkey": "0000000000000000000000000000000000000000000000000000000000000000",
     "description": "Nostr relay bouncer",
     "name": "Bostr",
     "software": "git+https://github.com/Yonle/bostr",
