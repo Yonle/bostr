@@ -3,7 +3,7 @@ const { validateEvent, nip19 } = require("nostr-tools");
 const auth = require("./auth.js");
 const nip42 = require("./nip42.js");
 
-let { relays, tmp_store, log_about_relays, authorized_keys, private_keys, reconnect_time } = require("./config");
+let { relays, tmp_store, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit } = require("./config");
 
 const socks = new Set();
 const csess = new Map();
@@ -16,8 +16,8 @@ module.exports = (ws, req) => {
   let authorized = true;
 
   ws.id = process.pid + Math.floor(Math.random() * 1000) + "_" + csess.size;
-  ws.sess = new Map(); // contains filter submitted by clients. per subID
-  ws.hold_sess = new Set(); // hold events to be transmitted after reached over <filter.limit> until all relays send EOSE. per subID
+  ws.subs = new Map(); // contains filter submitted by clients. per subID
+  ws.pause_subs = new Set(); // pause subscriptions from receiving events after reached over <filter.limit> until all relays send EOSE. per subID
   ws.events = new Map(); // only to prevent the retransmit of the same event. per subID
   ws.my_events = new Set(); // for event retransmitting.
   ws.pendingEOSE = new Map(); // each contain subID
@@ -61,8 +61,8 @@ module.exports = (ws, req) => {
         if (data.length < 3) return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "expected subID a string. but got the otherwise."]));
         if (typeof(data[2]) !== "object") return ws.send(JSON.stringify(["NOTICE", "expected filter to be obj, instead gives the otherwise."]));
-        if (ws.sess.has(data[1])) return ws.send(JSON.stringify(["NOTICE", "The same subscription ID is already available."]));
-        ws.sess.set(data[1], data[2]);
+        if (ws.subs.has(data[1])) return ws.send(JSON.stringify(["NOTICE", "The same subscription ID is already available."]));
+        ws.subs.set(data[1], data[2]);
         ws.events.set(data[1], new Set());
         bc(data, ws.id);
         if (data[2]?.limit < 1) return ws.send(JSON.stringify(["EOSE", data[1]]));
@@ -71,10 +71,10 @@ module.exports = (ws, req) => {
       case "CLOSE":
         if (!authorized) return;
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
-        ws.sess.delete(data[1]);
+        ws.subs.delete(data[1]);
         ws.events.delete(data[1]);
         ws.pendingEOSE.delete(data[1]);
-        ws.hold_sess.delete(data[1]);
+        ws.pause_subs.delete(data[1]);
         bc(data, ws.id);
         break;
       case "AUTH":
@@ -98,7 +98,7 @@ module.exports = (ws, req) => {
     csess.delete(ws.id);
 
     if (!authorized) return;
-    terminate_sess(ws.id);
+    terminate_subs(ws.id);
   });
 
   csess.set(ws.id, ws);
@@ -115,7 +115,7 @@ function bc(msg, id) {
 }
 
 // WS - Terminate all existing sockets that were for <id>
-function terminate_sess(id) {
+function terminate_subs(id) {
   for (sock of socks) {
     if (sock.id !== id) continue;
     sock.terminate();
@@ -142,7 +142,7 @@ function newConn(addr, id) {
       relay.send(JSON.stringify(i));
     }
 
-    for (i of client.sess) {
+    for (i of client.subs) {
       relay.send(JSON.stringify(["REQ", i[0], i[1]]));
     }
   });
@@ -157,13 +157,13 @@ function newConn(addr, id) {
     switch (data[0]) {
       case "EVENT": {
         if (data.length < 3 || typeof(data[1]) !== "string" || typeof(data[2]) !== "object") return;
-        if (!client.sess.has(data[1]) || client.hold_sess.has(data[1])) return;
+        if (!client.subs.has(data[1]) || client.pause_subs.has(data[1])) return;
 
         // if filter.since > receivedEvent.created_at, skip
         // if receivedEvent.created_at > filter.until, skip
-        if (client.sess.get(data[1]).since > data[2].created_at) return;
-        if (data[2].created_at > client.sess.get(data[1]).until) return;
-        const NotInSearchQuery = client.sess.get(data[1]).search && !data[2].content?.toLowerCase().includes(client.sess.get(data[1]).search?.toLowerCase());
+        if (client.subs.get(data[1]).since > data[2].created_at) return;
+        if (data[2].created_at > client.subs.get(data[1]).until) return;
+        const NotInSearchQuery = client.subs.get(data[1]).search && !data[2].content?.toLowerCase().includes(client.subs.get(data[1]).search?.toLowerCase());
 
         if (NotInSearchQuery) return;
         if (client.events.get(data[1]).has(data[2]?.id)) return; // No need to transmit once it has been transmitted before.
@@ -175,20 +175,24 @@ function newConn(addr, id) {
         // If it's at the limit, Send EOSE to client and delete pendingEOSE of subID
 
         // Skip if EOSE has been omitted
-        if (!client.pendingEOSE.has(data[1]) || !client.sess.get(data[1])?.limit) return;
-        if (client.events.get(data[1]).size >= client.sess.get(data[1])?.limit) {
-          // Once reached to <filter.limit>, send EOSE to client, Hold till all relays send EOSE.
+        if (!client.pendingEOSE.has(data[1]) || !client.subs.get(data[1])?.limit) return;
+        if (client.events.get(data[1]).size >= client.subs.get(data[1])?.limit) {
+          // Once reached to <filter.limit>, send EOSE to client.
           client.send(JSON.stringify(["EOSE", data[1]]));
-          client.hold_sess.add(data[1]);
+          if (pause_on_limit) {
+            client.pause_subs.add(data[1]);
+          } else {
+            client.pendingEOSE.delete(data[1]);
+          }
         }
         break;
       }
       case "EOSE":
         if (!client.pendingEOSE.has(data[1])) return;
         client.pendingEOSE.set(data[1], client.pendingEOSE.get(data[1]) + 1);
-        if (client.pendingEOSE.get(data[1]) < Array.from(socks).filter(sock => sock.id === id).length) return;
+        if (wait_eose && (client.pendingEOSE.get(data[1]) < Array.from(socks).filter(sock => sock.id === id).length)) return;
         client.pendingEOSE.delete(data[1]);
-        if (client.hold_sess.has(data[1])) return client.hold_sess.delete(data[1]);
+        if (client.pause_subs.has(data[1])) return client.pause_subs.delete(data[1]);
         client.send(JSON.stringify(data));
         break;
       case "AUTH":

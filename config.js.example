@@ -16,6 +16,19 @@ module.exports = {
   // Time before reconnect to relays in miliseconds.
   reconnect_time: 5000,
 
+  // Wait for every connected relays send EOSE.
+  // Could improve accurancy on received events.
+  //
+  // Depending on your configured relays,
+  // It may could cause loading problems in client due to slow EOSE from bouncer.
+  wait_eose: false,
+
+  // Pause a subscription from receiving further events after reached to <filter.limit>
+  // Could save client's bandwdith.
+  //
+  // Depending on <wait_eose> settings, It could either miss some events.
+  pause_on_limit: true,
+
   // A whitelist of users public keys who could use this bouncer.
   // Leaving this empty will allows everyone to use this bouncer.
   // NOTE: - Require NIP-42 compatible nostr client
