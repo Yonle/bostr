@@ -1,7 +1,7 @@
 {
   "name": "bostr",
   "version": "2.0.0",
-  "description": "Nostr Bouncer server",
+  "description": "Nostr relay bouncer",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
