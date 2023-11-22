@@ -3,12 +3,15 @@ const { validateEvent, nip19 } = require("nostr-tools");
 const auth = require("./auth.js");
 const nip42 = require("./nip42.js");
 
-let { relays, tmp_store, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, eose_timeout } = require("./config");
+let { relays, tmp_store, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, eose_timeout, max_eose_score } = require("./config");
 
 const socks = new Set();
 const csess = new Map();
 
 authorized_keys = authorized_keys?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
+
+// CL MaxEoseScore: Set <max_eose_score> as 0 if configured relays is under of the expected number from <max_eose_score>
+if (relays.length < max_eose_score) max_eose_score = 0;
 
 // CL - User socket
 module.exports = (ws, req) => {
@@ -226,7 +229,8 @@ function newConn(addr, id) {
       case "EOSE":
         if (!client.pendingEOSE.has(data[1])) return;
         client.pendingEOSE.set(data[1], client.pendingEOSE.get(data[1]) + 1);
-        if (wait_eose && (client.pendingEOSE.get(data[1]) < Array.from(socks).filter(sock => sock.id === id).length)) return;
+        if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.log(process.pid, "---", `[${id}]`, `got EOSE from ${ws.url} for ${data[1]}. There are ${client.pendingEOSE.get(data[1])} EOSE received out of ${Array.from(socks).filter(sock => sock.id === id).length} connected relays.`);
+        if (wait_eose && (client.pendingEOSE.get(data[1]) < (max_eose_score || Array.from(socks).filter(sock => sock.id === id).length))) return;
         client.pendingEOSE.delete(data[1]);
         cancel_EOSETimeout(data[1]);
         if (client.pause_subs.has(data[1])) return client.pause_subs.delete(data[1]);
