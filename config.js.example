@@ -37,6 +37,7 @@ module.exports = {
   // Normally, waiting EOSE from 3 relays should be enough. Leaving it with 0 equals wait for every established relays.
   // NOTE: Please adjust this max score correctly with your configured relays.
   //       If you only setted up 3 relays, Set the <max_eose_score> as 0.
+  // Tip : The bigger = The more accurate EOSE, The less = EOSE sent way earlier.
   max_eose_score: 3,
 
   // A whitelist of users public keys who could use this bouncer.
