@@ -176,7 +176,7 @@ function newConn(addr, id) {
     if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.log(process.pid, "---", `[${id}] [${socks.size}/${relays.length*csess.size}]`, relay.url, "is connected");
 
     for (i of client.my_events) {
-      relay.send(JSON.stringify(i));
+      relay.send(JSON.stringify(["EVENT", i]));
     }
 
     for (i of client.subs) {
