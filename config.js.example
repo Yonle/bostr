@@ -80,6 +80,17 @@ module.exports = {
     "version": require("./package.json").version
   },
 
+  // Cache relays
+  // Used for caching received events from <relays> to reduce bandwidth waste.
+  // Keeping this empty will disable caching function.
+  //
+  // To make this working properly, Please enable <pause_on_limit>.
+  cache_relays: [
+    // "ws://localhost:8001",
+    // "ws://localhost:8002",
+    // ...and so on
+  ],
+
   // Nostr relays to bounce [Required]
   relays: [
     "wss://example1.com",
