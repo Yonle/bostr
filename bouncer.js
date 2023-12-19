@@ -61,7 +61,8 @@ module.exports = (ws, req) => {
         if (!validateEvent(data[1])) return ws.send(JSON.stringify(["NOTICE", "error: invalid event"]));
         if (data[1].kind == 22242) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rejected: kind 22242"]));
         ws.my_events.add(data[1]);
-        bc(data, ws.id);
+        direct_bc(data, ws.id);
+        cache_bc(data, ws.id);
         ws.send(JSON.stringify(["OK", data[1]?.id, true, ""]));
         break;
       case "REQ":
