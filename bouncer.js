@@ -203,11 +203,11 @@ function newConn(addr, id) {
     socks.add(relay); // Add this socket session to [socks]
     if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.log(process.pid, "---", `[${id}] [${socks.size}/${relays.length*csess.size}]`, relay.url, "is connected");
 
-    if (cache_relays?.includes(relay.url)) {
-      for (i of client.my_events) {
-        relay.send(JSON.stringify(["EVENT", i]));
-      }
+    for (i of client.my_events) {
+      relay.send(JSON.stringify(["EVENT", i]));
+    }
 
+    if (cache_relays?.includes(relay.url)) {
       for (i of client.subs) {
         relay.send(JSON.stringify(["REQ", i[0], i[1]]));
       }
@@ -218,7 +218,7 @@ function newConn(addr, id) {
     try {
       data = JSON.parse(data);
     } catch (error) {
-      return console.error(error);
+      return;
     }
 
     switch (data[0]) {
@@ -237,13 +237,15 @@ function newConn(addr, id) {
         if (NotInSearchQuery) return;
         if (client.events.get(data[1]).has(data[2]?.id)) return; // No need to transmit once it has been transmitted before.
 
-        client.events.get(data[1]).add(data[2]?.id);
-        if (!client.pause_subs.has(data[1])) client.send(JSON.stringify(data));
+        if (!client.pause_subs.has(data[1])) {
+          client.events.get(data[1]).add(data[2]?.id);
+          client.send(JSON.stringify(data));
+          if (data[2]?.created_at > recentevent[id + ":" + data[1]])
+            recentevent[id + ":" + data[1]] = data[2]?.created_at
+        }
 
         // send into cache relays.
         if (!cache_relays?.includes(relay.url)) cache_bc(["EVENT", data[2]], id);
-        if (data[2]?.created_at > recentevent[id + ":" + data[1]])
-          recentevent[id + ":" + data[1]] = data[2]?.created_at
 
         // Now count for REQ limit requested by client.
         // If it's at the limit, Send EOSE to client and delete pendingEOSE of subID
@@ -253,7 +255,7 @@ function newConn(addr, id) {
         if (client.events.get(data[1]).size >= client.subs.get(data[1])?.limit) {
           // Once reached to <filter.limit>, send EOSE to client.
           client.send(JSON.stringify(["EOSE", data[1]]));
-          if (pause_on_limit) {
+          if (pause_on_limit || cache_relays?.includes(relay.url)) {
             client.pause_subs.add(data[1]);
           } else {
             client.pendingEOSE.delete(data[1]);
@@ -268,19 +270,23 @@ function newConn(addr, id) {
 
         if (!cache_relays?.includes(relay.url)) {
           if (wait_eose && (client.pendingEOSE.get(data[1]) < (max_eose_score || Array.from(socks).filter(sock => sock.id === id).length))) return;
+          if (client.pause_subs.has(data[1])) return client.pause_subs.delete(data[1]);
+
           cancel_EOSETimeout(data[1]);
         } else {
-          if (client.pendingEOSE.get(data[1]) < Array.from(socks).filter(sock => (sock.id === id) && cache_relays.includes(sock.url)).length) return;
+          if (client.pendingEOSE.get(data[1]) < Array.from(socks).filter(sock => (sock.id === id) && cache_relays?.includes(sock.url)).length) return;
           // get the filter
           const filter = client.subs.get(data[1]);
           if (!filter.since && recentevent[id + ":" + data[1]]) filter.since = recentevent[id + ":" + data[1]];
+          if (client.pause_subs.has(data[1])) {
+            client.pause_subs.delete(data[1]);
+            client.pendingEOSE.delete(data[1]);
+          }
 
           // now req to the direct connection, with the recent one please.
           return direct_bc(["REQ", data[1], filter], id);
         }
 
-        client.pendingEOSE.delete(data[1]);
-        if (client.pause_subs.has(data[1])) return client.pause_subs.delete(data[1]);
         client.send(JSON.stringify(data));
         break;
       case "AUTH":
