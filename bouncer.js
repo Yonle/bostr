@@ -205,10 +205,8 @@ function newConn(addr, id) {
       relay.send(JSON.stringify(["EVENT", i]));
     }
 
-    if (cache_relays?.includes(relay.url)) {
-      for (i of client.subs) {
-        relay.send(JSON.stringify(["REQ", i[0], i[1]]));
-      }
+    for (i of client.subs) {
+      relay.send(JSON.stringify(["REQ", i[0], i[1]]));
     }
   });
 
