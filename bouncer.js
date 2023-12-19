@@ -8,8 +8,6 @@ let { relays, tmp_store, log_about_relays, authorized_keys, private_keys, reconn
 const socks = new Set();
 const csess = new Map();
 
-let recentevent = {};
-
 authorized_keys = authorized_keys?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
 
 // CL MaxEoseScore: Set <max_eose_score> as 0 if configured relays is under of the expected number from <max_eose_score>
@@ -86,7 +84,6 @@ module.exports = (ws, req) => {
         ws.pause_subs.delete(data[1]);
         cancel_EOSETimeout(ws.id, data[1]);
 
-        delete recentevent[ws.id + ":" + data[1]];
         cache_bc(data, ws.id);
         direct_bc(data, ws.id);
         break;
@@ -241,8 +238,6 @@ function newConn(addr, id) {
         if (!client.pause_subs.has(data[1])) {
           client.events.get(data[1]).add(data[2]?.id);
           client.send(JSON.stringify(data));
-          if (data[2]?.created_at > recentevent[id + ":" + data[1]])
-            recentevent[id + ":" + data[1]] = data[2]?.created_at
         }
 
         // send into cache relays.
@@ -278,7 +273,6 @@ function newConn(addr, id) {
           if (client.pendingEOSE.get(data[1]) < Array.from(socks).filter(sock => (sock.id === id) && cache_relays?.includes(sock.url)).length) return;
           // get the filter
           const filter = client.subs.get(data[1]);
-          if (!filter.since && recentevent[id + ":" + data[1]]) filter.since = recentevent[id + ":" + data[1]];
           if (client.pause_subs.has(data[1])) {
             client.pause_subs.delete(data[1]);
             client.pendingEOSE.delete(data[1]);
