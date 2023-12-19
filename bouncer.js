@@ -85,7 +85,7 @@ module.exports = (ws, req) => {
       case "AUTH":
         if (auth(authKey, data[1], ws, req)) {
           ws.pubkey = data[1].pubkey;
-          console.log(process.pid, "---", ws.id, "succesfully authorized as", ws.pubkey, private_keys[ws.pubkey] ? "(admin)" : "(user)");
+          console.log(process.pid, "---", ws.id, "successfully authorized as", ws.pubkey, private_keys[ws.pubkey] ? "(admin)" : "(user)");
           if (authorized) return;
           relays.forEach(_ => newConn(_, ws.id));
           authorized = true;
