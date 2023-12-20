@@ -228,7 +228,7 @@ function newConn(addr, id) {
         // if receivedEvent.created_at > filter.until, skip
         if (client.subs.get(data[1]).since > data[2].created_at) return;
         if (data[2].created_at > client.subs.get(data[1]).until) return;
-        const NotInSearchQuery = client.subs.get(data[1]).search && !data[2].content?.toLowerCase().includess(client.subs.get(data[1]).search?.toLowerCase());
+        const NotInSearchQuery = client.subs.get(data[1]).search && !data[2].content?.toLowerCase().includes(client.subs.get(data[1]).search?.toLowerCase());
 
         if (NotInSearchQuery) return;
         if (client.events.get(data[1]).has(data[2]?.id)) return; // No need to transmit once it has been transmitted before.
