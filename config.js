@@ -82,9 +82,8 @@ module.exports = {
 
   // Nostr relays to bounce [Required]
   relays: [
-    "wss://example1.com",
-    "wss://example2.com",
-    // "wss://example3.com",
-    // ...and so on
+    "wss://yabu.me",
+    "wss://relay-jp.nostr.wirednet.jp",
+    "wss://damus.io"
   ]
 }
