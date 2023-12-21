@@ -44,7 +44,7 @@ module.exports = {
   // Leaving this empty will allows everyone to use this bouncer.
   // NOTE: - Require NIP-42 compatible nostr client
   authorized_keys: [
-    npub1avgeydxyv7kf6tl75kmjsne6wj7sg2r6zt8atz3z6xtzvs6vmheqssyucl
+    "npub1avgeydxyv7kf6tl75kmjsne6wj7sg2r6zt8atz3z6xtzvs6vmheqssyucl"
   ],
 
   // Used for accessing NIP-42 protected events from certain relays.
