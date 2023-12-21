@@ -84,6 +84,7 @@ module.exports = {
   relays: [
     "wss://yabu.me",
     "wss://relay-jp.nostr.wirednet.jp",
-    "wss://damus.io"
+    "wss://damus.io",
+    "wss://search.nos.today",
   ]
 }
