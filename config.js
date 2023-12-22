@@ -8,13 +8,13 @@ module.exports = {
 
   // Clusters.
   // 0 will make bostr run clusters with available parallelism / CPU cores.
-  clusters: 0,
+  clusters: 1,
 
   // Log about bouncer connection with relays? 
   log_about_relays: false,
 
   // Time before reconnect to relays in miliseconds.
-  reconnect_time: 5000,
+  reconnect_time: 1000,
 
   // Wait for every connected relays send EOSE.
   // Could improve accurancy on received events.
@@ -38,7 +38,7 @@ module.exports = {
   // NOTE: Please adjust this max score correctly with your configured relays.
   //       If you only setted up 3 relays, Set the <max_eose_score> as 0.
   // Tip : The bigger = The more accurate EOSE, The less = EOSE sent way earlier.
-  max_eose_score: 3,
+  max_eose_score: 1,
 
   // A whitelist of users public keys who could use this bouncer.
   // Leaving this empty will allows everyone to use this bouncer.
