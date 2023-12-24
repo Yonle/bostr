@@ -7,6 +7,7 @@ let { relays, tmp_store, log_about_relays, authorized_keys, private_keys, reconn
 
 const socks = new Set();
 const csess = new Map();
+const reconn_tout_handles = new Map();
 
 authorized_keys = authorized_keys?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
 
@@ -84,6 +85,11 @@ module.exports = (ws, req) => {
         ws.pause_subs.delete(data[1]);
         cancel_EOSETimeout(ws.id, data[1]);
 
+        if (reconn_tout_handles[ws.id]) {
+          clearTimeout(reconn_tout_handles[ws.id]);
+          reconn_tout_handles.delete(ws.id);
+        }
+
         cache_bc(data, ws.id);
         direct_bc(data, ws.id);
         break;
@@ -109,6 +115,11 @@ module.exports = (ws, req) => {
 
     for (i of ws.EOSETimeout) {
       clearTimeout(i[1]);
+    }
+
+    if (reconn_tout_handles[ws.id]) {
+      clearTimeout(reconn_tout_handles[ws.id]);
+      reconn_tout_handles.delete(ws.id);
     }
 
     if (!authorized) return;
@@ -158,7 +169,10 @@ function direct_bc(msg, id) {
   for (sock of socks) {
     if (cache_relays?.includes(sock.url)) continue;
     if (sock.id !== id) continue;
-    if (sock.readyState >= 2) return socks.delete(sock);
+    if (sock.readyState >= 2) {
+      socks.delete(sock);
+      return;
+    }
     sock.send(JSON.stringify(msg));
   }
 }
@@ -167,7 +181,10 @@ function cache_bc(msg, id) {
   for (sock of socks) {
     if (!cache_relays?.includes(sock.url)) continue;
     if (sock.id !== id) continue;
-    if (sock.readyState >= 2) return socks.delete(sock);
+    if (sock.readyState >= 2) {
+      socks.delete(sock);
+      return
+    }
     sock.send(JSON.stringify(msg));
   }
 }
@@ -226,8 +243,9 @@ function newConn(addr, id) {
 
         // if filter.since > receivedEvent.created_at, skip
         // if receivedEvent.created_at > filter.until, skip
-        if (client.subs.get(data[1]).since > data[2].created_at) return;
-        if (data[2].created_at > client.subs.get(data[1]).until) return;
+        let data_1 = client.subs.get(data[1])
+        if ('since' in data_1 && data_1.since > data[2].created_at) return;
+        if ('until' in data_1 && data[2].created_at > data_1.until) return;
         const NotInSearchQuery = client.subs.get(data[1]).search && !data[2].content?.toLowerCase().includes(client.subs.get(data[1]).search?.toLowerCase());
 
         if (NotInSearchQuery) return;
@@ -291,6 +309,7 @@ function newConn(addr, id) {
 
   relay.on('error', _ => {
     if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.error(process.pid, "-!-", `[${id}]`, relay.url, _.toString())
+    socks.delete(sock);
   });
 
   relay.on('close', _ => {
@@ -298,6 +317,7 @@ function newConn(addr, id) {
     if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.log(process.pid, "-!-", `[${id}] [${socks.size}/${relays.length*csess.size}]`, "Disconnected from", relay.url);
 
     if (!csess.has(id)) return;
-    setTimeout(_ => newConn(addr, id), reconnect_time || 5000); // As a bouncer server, We need to reconnect.
+    let tout_handle = setTimeout(_ => newConn(addr, id), reconnect_time || 5000); // As a bouncer server, We need to reconnect.
+    reconn_tout_handles.set(id, tout_handle);
   });
 }
