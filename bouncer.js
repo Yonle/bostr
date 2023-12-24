@@ -318,7 +318,13 @@ function newConn(addr, id) {
     if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.log(process.pid, "-!-", `[${id}] [${socks.size}/${relays.length*csess.size}]`, "Disconnected from", relay.url);
 
     if (!csess.has(id)) return;
-    let tout_handle = setTimeout(_ => newConn(addr, id), reconnect_time || 5000); // As a bouncer server, We need to reconnect.
+    let tout_handle =       
+    setTimeout(_ => { 
+        newConn(addr, id)
+        reconn_tout_handles.delete(id);
+      },
+      reconnect_time || 5000
+    );
     reconn_tout_handles.set(id, tout_handle);
   });
 }
