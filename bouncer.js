@@ -108,7 +108,14 @@ module.exports = (ws, req) => {
     }
   });
 
-  ws.on('error', console.error);
+  ws.on('error', _ => {
+    console.error();
+    if (reconn_tout_handles[ws.id]) {
+      clearTimeout(reconn_tout_handles[ws.id]);
+      reconn_tout_handles.delete(ws.id);
+    }
+  });
+  
   ws.on('close', _ => {
     console.log(process.pid, "---", "Sock", ws.id, "has disconnected.");
     csess.delete(ws.id);
