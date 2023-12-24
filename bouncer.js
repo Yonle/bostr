@@ -27,6 +27,7 @@ module.exports = (ws, req) => {
   ws.my_events = new Set(); // for event retransmitting.
   ws.pendingEOSE = new Map(); // each contain subID
   ws.EOSETimeout = new Map(); // per subID
+  ws.reconnectTimeout = new Set(); // relays timeout() before reconnection. Only use after client disconnected.
 
   if (authorized_keys?.length) {
     authKey = Date.now() + Math.random().toString(36);
@@ -113,6 +114,11 @@ module.exports = (ws, req) => {
 
     if (!authorized) return;
     terminate_subs(ws.id);
+
+    for (i of ws.reconnectTimeout) {
+      clearInterval(i);
+      // Let the garbage collector do the thing. No need to add ws.reconnectTimeout.delete(i);
+    }
   });
 
   csess.set(ws.id, ws);
@@ -226,9 +232,10 @@ function newConn(addr, id) {
 
         // if filter.since > receivedEvent.created_at, skip
         // if receivedEvent.created_at > filter.until, skip
-        if (client.subs.get(data[1]).since > data[2].created_at) return;
-        if (data[2].created_at > client.subs.get(data[1]).until) return;
-        const NotInSearchQuery = client.subs.get(data[1]).search && !data[2].content?.toLowerCase().includes(client.subs.get(data[1]).search?.toLowerCase());
+        const cFilter = client.subs.get(data[1])
+        if (cFilter?.since > data[2].created_at) return;
+        if (data[2].created_at > cFilter?.until) return;
+        const NotInSearchQuery = "search" in cFilter && !data[2]?.content?.toLowerCase().includes(cFilter.search.toLowerCase());
 
         if (NotInSearchQuery) return;
         if (client.events.get(data[1]).has(data[2]?.id)) return; // No need to transmit once it has been transmitted before.
@@ -298,6 +305,10 @@ function newConn(addr, id) {
     if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.log(process.pid, "-!-", `[${id}] [${socks.size}/${relays.length*csess.size}]`, "Disconnected from", relay.url);
 
     if (!csess.has(id)) return;
-    setTimeout(_ => newConn(addr, id), reconnect_time || 5000); // As a bouncer server, We need to reconnect.
+    const reconnectTimeout = setTimeout(_ => {
+      newConn(addr, id);
+      client.reconnectTimeout.delete(reconnectTimeout);
+    }, reconnect_time || 5000); // As a bouncer server, We need to reconnect.
+    client.reconnectTimeout.add(reconnectTimeout);
   });
 }
