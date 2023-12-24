@@ -176,10 +176,7 @@ function direct_bc(msg, id) {
   for (sock of socks) {
     if (cache_relays?.includes(sock.url)) continue;
     if (sock.id !== id) continue;
-    if (sock.readyState >= 2) {
-      socks.delete(sock);
-      return;
-    }
+    if (sock.readyState >= 2) return socks.delete(sock);
     sock.send(JSON.stringify(msg));
   }
 }
@@ -188,10 +185,7 @@ function cache_bc(msg, id) {
   for (sock of socks) {
     if (!cache_relays?.includes(sock.url)) continue;
     if (sock.id !== id) continue;
-    if (sock.readyState >= 2) {
-      socks.delete(sock);
-      return
-    }
+    if (sock.readyState >= 2) return socks.delete(sock);
     sock.send(JSON.stringify(msg));
   }
 }
