@@ -204,6 +204,7 @@ function newConn(addr, id) {
 
   relay.id = id;
   relay.on('open', _ => {
+    if (!csess.has(id)) return relay.terminate();
     socks.add(relay); // Add this socket session to [socks]
     if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.log(process.pid, "---", `[${id}] [${socks.size}/${relays.length*csess.size}]`, relay.url, "is connected");
 
