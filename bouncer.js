@@ -309,7 +309,7 @@ function newConn(addr, id) {
 
   relay.on('error', _ => {
     if (process.env.LOG_ABOUT_RELAYS || log_about_relays) console.error(process.pid, "-!-", `[${id}]`, relay.url, _.toString())
-    socks.delete(sock);
+    socks.delete(relay);
   });
 
   relay.on('close', _ => {
