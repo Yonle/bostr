@@ -1,7 +1,3 @@
-modification by ryo_grid is commited to local-change branch.
-
-----
-
 # Bostr
 A nostr relay bouncer.
 
