@@ -10,7 +10,7 @@ module.exports = {
   // 0 will make bostr run clusters with available parallelism / CPU cores.
   clusters: 0,
 
-  // Log about bouncer connection with relays?
+  // Log about bouncer connection with relays? 
   log_about_relays: false,
 
   // Time before reconnect to relays in milliseconds.
@@ -42,19 +42,8 @@ module.exports = {
 
   // A whitelist of users public keys who could use this bouncer.
   // Leaving this empty will allows everyone to use this bouncer.
-  // Adding the value to here will result bypassing writable_keys function.
   // NOTE: - Require NIP-42 compatible nostr client
   authorized_keys: [
-    // "pubkey-in-hex",
-    // "npub ....",
-    // ....
-  ],
-
-  // A whitelist of users public keys who could write events to this bouncer.
-  // Leaving this empty will allows everyone to write events to this bouncer unless you set authorized_keys.
-  // If the value set in authorized_keys, This list will be ignored.
-  // This does not require NIP-42 compatible nostr client because it will check from events data.
-  writable_keys: [
     // "pubkey-in-hex",
     // "npub ....",
     // ....

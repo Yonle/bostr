@@ -1,15 +1,14 @@
 const WebSocket = require("ws");
-const { verifySignature, validateEvent, nip19 } = require("nostr-tools");
+const { validateEvent, nip19 } = require("nostr-tools");
 const auth = require("./auth.js");
 const nip42 = require("./nip42.js");
 
-let { relays, writable_keys, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, eose_timeout, max_eose_score, cache_relays } = require("./config");
+let { relays, tmp_store, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, eose_timeout, max_eose_score, cache_relays } = require("./config");
 
 const socks = new Set();
 const csess = new Map();
 
 authorized_keys = authorized_keys?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
-writable_keys = writable_keys?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
 
 // CL MaxEoseScore: Set <max_eose_score> as 0 if configured relays is under of the expected number from <max_eose_score>
 if (relays.length < max_eose_score) max_eose_score = 0;
@@ -19,7 +18,6 @@ cache_relays = cache_relays?.map(i => i.endsWith("/") ? i : i + "/");
 // CL - User socket
 module.exports = (ws, req) => {
   let authKey = null;
-  let isPersonalRelay = false;
   let authorized = true;
 
   ws.id = process.pid + Math.floor(Math.random() * 1000) + "_" + csess.size;
@@ -32,12 +30,11 @@ module.exports = (ws, req) => {
   ws.reconnectTimeout = new Set(); // relays timeout() before reconnection. Only use after client disconnected.
 
   if (authorized_keys?.length) {
-    isPersonalRelay = true;
     authKey = Date.now() + Math.random().toString(36);
     authorized = false;
     ws.send(JSON.stringify(["AUTH", authKey]));
   } else if (private_keys !== {}) {
-    // If there is no whitelist, Then we ask client what is their public key.
+    // If there is no whitelist, Then we ask to client what is their public key.
     // We will enable NIP-42 function for this session if user pubkey was available & valid in <private_keys>.
 
     // There is no need to limit this session. We only ask who is this user.
@@ -61,9 +58,7 @@ module.exports = (ws, req) => {
       case "EVENT":
         if (!authorized) return;
         if (!validateEvent(data[1])) return ws.send(JSON.stringify(["NOTICE", "error: invalid event"]));
-        if (!verifySignature(data[1])) return ws.send(JSON.stringify(["NOTICE", "error: invalid signature"]));
-        if (data[1].kind === 22242) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rejected: kind 22242"]));
-        if (!isPersonalRelay && writable_keys.length !== 0 && !writable_keys.includes(data[1]?.pubkey)) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "blocked: user must be added to the allowlist"]));
+        if (data[1].kind == 22242) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rejected: kind 22242"]));
         ws.my_events.add(data[1]);
         direct_bc(data, ws.id);
         cache_bc(data, ws.id);
