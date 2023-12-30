@@ -1,0 +1,16 @@
+/config.js
+.idea/**
+node_modules/**
+package-lock.json
+.yarn/**
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+[Dd]esktop.ini
+[._]*.sw[a-p]
+[._]sw[a-p]
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
