@@ -3,13 +3,13 @@ const { verifySignature, validateEvent, nip19 } = require("nostr-tools");
 const auth = require("./auth.js");
 const nip42 = require("./nip42.js");
 
-let { relays, log_about_relays, authorized_keys, writable_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, eose_timeout, max_eose_score, cache_relays } = require("./config");
+let { relays, log_about_relays, authorized_keys, authorized_keys_no_nip42, private_keys, reconnect_time, wait_eose, pause_on_limit, eose_timeout, max_eose_score, cache_relays } = require("./config");
 
 const socks = new Set();
 const csess = new Map();
 
 authorized_keys = authorized_keys?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
-writable_keys = writable_keys?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
+authorized_keys_no_nip42 = authorized_keys_no_nip42?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
 
 // CL MaxEoseScore: Set <max_eose_score> as 0 if configured relays is under of the expected number from <max_eose_score>
 if (relays.length < max_eose_score) max_eose_score = 0;
@@ -63,7 +63,11 @@ module.exports = (ws, req) => {
         if (!validateEvent(data[1])) return ws.send(JSON.stringify(["NOTICE", "error: invalid event"]));
         if (!verifySignature(data[1])) return ws.send(JSON.stringify(["NOTICE", "error: invalid signature"]));
         if (data[1].kind === 22242) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rejected: kind 22242"]));
-        if (!isPersonalRelay && writable_keys.length !== 0 && !writable_keys.includes(data[1]?.pubkey)) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "blocked: user must be added to the allowlist"]));
+        if (!isPersonalRelay && authorized_keys_no_nip42.length !== 0 && !authorized_keys_no_nip42.includes(data[1]?.pubkey)) {
+          terminate_session(ws, authorized)
+          authorized = false;
+          return ws.send(JSON.stringify(["OK", data[1]?.id, false, "blocked: user must be added to the allowlist"]))
+        }
         ws.my_events.add(data[1]);
         direct_bc(data, ws.id);
         cache_bc(data, ws.id);
@@ -112,18 +116,7 @@ module.exports = (ws, req) => {
   ws.on('close', _ => {
     console.log(process.pid, "---", "Sock", ws.id, "has disconnected.");
     csess.delete(ws.id);
-
-    for (i of ws.EOSETimeout) {
-      clearTimeout(i[1]);
-    }
-
-    if (!authorized) return;
-    terminate_subs(ws.id);
-
-    for (i of ws.reconnectTimeout) {
-      clearTimeout(i);
-      // Let the garbage collector do the thing. No need to add ws.reconnectTimeout.delete(i);
-    }
+    terminate_session(ws, authorized)
   });
 
   csess.set(ws.id, ws);
@@ -317,4 +310,17 @@ function newConn(addr, id) {
     }, reconnect_time || 5000); // As a bouncer server, We need to reconnect.
     client.reconnectTimeout.add(reconnectTimeout);
   });
+}
+
+function terminate_session(ws, authorized) {
+  for (i of ws.EOSETimeout) {
+    clearTimeout(i[1]);
+  }
+
+  if (!authorized) return;
+  terminate_subs(ws.id);
+
+  for (i of ws.reconnectTimeout) {
+    clearTimeout(i);
+  }
 }

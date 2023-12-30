@@ -42,7 +42,9 @@ module.exports = {
 
   // A whitelist of users public keys who could use this bouncer.
   // Leaving this empty will allows everyone to use this bouncer.
-  // Adding the value to here will result bypassing writable_keys function.
+  // Adding the value to this list will result in ignore in authorized_keys_no_nip42 list.
+  // Use this list if you need to use this bouncer for personal use and if the client supports NIP-42.
+  //
   // NOTE: - Require NIP-42 compatible nostr client
   authorized_keys: [
     // "pubkey-in-hex",
@@ -50,11 +52,14 @@ module.exports = {
     // ....
   ],
 
-  // A whitelist of users public keys who could write events to this bouncer.
-  // Leaving this empty will allows everyone to write events to this bouncer unless you set authorized_keys.
-  // If the value set in authorized_keys, This list will be ignored.
-  // This does not require NIP-42 compatible nostr client because it will check from events data.
-  writable_keys: [
+  // This list will only be used when <authorized_keys> is empty.
+  // This list will be used similar to the purpose of <authorized_keys>.
+  // Instead of using NIP-42, the bouncer will check their public key upon EVENT message.
+  // If the public key is not in this list, The bouncer will ignore the event.
+  // Also in that case, the server will discontinue serving to them in the same ws session.
+  // Leaving this empty will allows everyone to use this bouncer unless you set authorized_keys.
+  // Use this list only if you need to use this bouncer for personal use with non NIP-42 compatible nostr client.
+  authorized_keys_no_nip42: [
     // "pubkey-in-hex",
     // "npub ....",
     // ....
