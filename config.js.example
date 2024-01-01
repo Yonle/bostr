@@ -41,13 +41,22 @@ module.exports = {
   max_eose_score: 0,
 
   // A whitelist of users public keys who could use this bouncer.
-  // Leaving this empty will allows everyone to use this bouncer.
-  // NOTE: - Require NIP-42 compatible nostr client
+  // Leaving this empty will allow everyone to use this bouncer.
+  // NOTE: - Require NIP-42 compatible nostr client.
+  //         You may use <allowed_event_authors> instead if your client does not support NIP-42.
   authorized_keys: [
     // "pubkey-in-hex",
     // "npub ....",
     // ....
   ],
+
+  // A whitelist of approved event publishers.
+  // Leaving this empty will allow everyone to publish events with this bouncer.
+  approved_publishers: [
+    // "pubkey-in-hex",
+    // "npub ....",
+    // ....
+  ],  
 
   // Used for accessing NIP-42 protected events from certain relays.
   // It could be your key. Leaving this empty completely disables NIP-42 function.

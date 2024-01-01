@@ -1,14 +1,15 @@
 const WebSocket = require("ws");
-const { validateEvent, nip19 } = require("nostr-tools");
+const { verifySignature, validateEvent, nip19 } = require("nostr-tools");
 const auth = require("./auth.js");
 const nip42 = require("./nip42.js");
 
-let { relays, tmp_store, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, eose_timeout, max_eose_score, cache_relays } = require("./config");
+let { relays, approved_publishers, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, eose_timeout, max_eose_score, cache_relays } = require("./config");
 
 const socks = new Set();
 const csess = new Map();
 
 authorized_keys = authorized_keys?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
+approved_publishers = approved_publishers?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
 
 // CL MaxEoseScore: Set <max_eose_score> as 0 if configured relays is under of the expected number from <max_eose_score>
 if (relays.length < max_eose_score) max_eose_score = 0;
@@ -57,8 +58,14 @@ module.exports = (ws, req) => {
     switch (data[0]) {
       case "EVENT":
         if (!authorized) return;
-        if (!validateEvent(data[1])) return ws.send(JSON.stringify(["NOTICE", "error: invalid event"]));
+        if (!validateEvent(data[1]) || !verifySignature(data[1])) return ws.send(JSON.stringify(["NOTICE", "error: invalid event"]));
         if (data[1].kind == 22242) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rejected: kind 22242"]));
+        console.log(approved_publishers?.length, approved_publishers?.includes(data[1].pubkey), verifySignature(data[1]))
+        if (
+          approved_publishers?.length &&
+          !approved_publishers?.includes(data[1].pubkey)
+        ) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rejected: unauthorized"]));
+
         ws.my_events.add(data[1]);
         direct_bc(data, ws.id);
         cache_bc(data, ws.id);
