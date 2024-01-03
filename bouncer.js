@@ -247,7 +247,7 @@ function howManyOrphanSess() {
 function clearOrphanSess(l) {
   let cn = 0;
   for (sess of csess) {
-    if (cn > l) break;
+    if (cn >= l) break;
     if (sess[1] !== null) continue;
     terminate_sess(sess[0]);
     cn++;
