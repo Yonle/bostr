@@ -130,6 +130,11 @@ module.exports = (ws, req) => {
       // Let the garbage collector do the thing. No need to add ws.reconnectTimeout.delete(i);
     }
 
+    for (i of ws.subs) {
+      direct_bc(["CLOSE", i[0]], ws.id);
+      cache_bc(["CLOSE", i[0]], ws.id);
+    }
+
     onClientDisconnect();
   });
 
