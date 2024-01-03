@@ -276,7 +276,7 @@ function newConn(addr, id) {
   relay.on('open', _ => {
     if (!csess.has(id)) return relay.terminate();
     socks.add(relay); // Add this socket session to [socks]
-    if (log_about_relays) console.log(process.pid, "---", `[${id}] [${socks.size}/${relays.length*csess.size}] ${relay.url} is connected ${!client ? "(orphan)" : ""}`);
+    if (log_about_relays) console.log(process.pid, "---", `[${id}] [${socks.size}/${relays.length*csess.size}] ${relay.url} is connected ${!relay.client ? "(orphan)" : ""}`);
 
     if (!relay.client) return; // is orphan, do nothing.
     for (i of relay.client.my_events) {
