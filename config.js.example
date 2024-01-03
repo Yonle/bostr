@@ -16,6 +16,11 @@ module.exports = {
   // Time before reconnect to relays in milliseconds.
   reconnect_time: 5000,
 
+  // Maximum amount of orphan sessions.
+  // Setting to 0 disables orphan session function.
+  // PRIVACY WARNING: Enabling this may could leak some events that people were not supposed to receive (Eg. PM)
+  max_orphan_sess: 0,
+
   // Wait for every connected relays send EOSE.
   // Could improve accuracy on received events.
   //
