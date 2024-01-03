@@ -62,7 +62,7 @@ module.exports = (ws, req) => {
         if (!authorized) return;
         if (!validateEvent(data[1]) || !verifySignature(data[1])) return ws.send(JSON.stringify(["NOTICE", "error: invalid event"]));
         if (data[1].kind == 22242) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rejected: kind 22242"]));
-        console.log(approved_publishers?.length, approved_publishers?.includes(data[1].pubkey), verifySignature(data[1]))
+
         if (
           approved_publishers?.length &&
           !approved_publishers?.includes(data[1].pubkey)
