@@ -47,7 +47,7 @@ module.exports = (ws, req) => {
     ws.send(JSON.stringify(["AUTH", authKey]));
   }
 
-  console.log(process.pid, `->- ${req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address} connected as ${ws.id}`);
+  console.log(process.pid, `->- ${req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address} connected as ${ws.id} ${orphan ? "(orphan reused)" : ""}`);
   ws.on("message", data => {
     try {
       data = JSON.parse(data);
@@ -215,7 +215,7 @@ function onClientDisconnect() {
   const orphanSessNum = howManyOrphanSess();
   const max = max_orphan_sess || 0;
   if (orphanSessNum > max) {
-    if (log_about_relays) console.log(process.pid, `There are ${orphanSessNum} of orphan session. I will clear ${orphanSessNum - max} of orphan sessions.`);
+    console.log(process.pid, `There are ${orphanSessNum} of orphan session. I will clear ${orphanSessNum - max} of orphan sessions.`);
     clearOrphanSess(orphanSessNum - max);
   }
 }
