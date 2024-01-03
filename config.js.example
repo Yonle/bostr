@@ -18,10 +18,7 @@ module.exports = {
 
   // Maximum amount of orphan sessions.
   // Setting to 0 disables orphan session function.
-
-  // NOTE: Unreliable.
-  // PRIVACY WARNING: Enabling this may could leak some events that people were not supposed to receive (Eg. PM)
-  max_orphan_sess: 0,
+  max_orphan_sess: 7,
 
   // Wait for every connected relays send EOSE.
   // Could improve accuracy on received events.
