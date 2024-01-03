@@ -137,6 +137,9 @@ module.exports = (ws, req) => {
     }
 
     onClientDisconnect();
+
+    // admin session must be destroyed quick.
+    if (ws.pubkey) terminate_sess(ws.id);
   });
 
   if (authorized) {
