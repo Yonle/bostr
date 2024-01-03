@@ -118,7 +118,7 @@ module.exports = (ws, req) => {
   ws.on('error', console.error);
   ws.on('close', _ => {
     console.log(process.pid, "---", "Sock", ws.id, "has disconnected.");
-    csess.set(ws.id, null); // set as orphan.
+    if (csess.has(ws.id)) csess.set(ws.id, null); // set as orphan.
 
     for (i of ws.EOSETimeout) {
       clearTimeout(i[1]);
@@ -206,6 +206,7 @@ function bc(msg, id) {
 
 // WS - Terminate all existing sockets that were for <id>
 function terminate_sess(id) {
+  csess.delete(id);
   for (sock of socks) {
     if (sock.id !== id) continue;
     sock.terminate();
@@ -246,7 +247,6 @@ function clearOrphanSess(l) {
     if (cn > l) break;
     if (sess[1] !== null) continue;
     terminate_sess(sess[0]);
-    csess.delete(sess[0]);
     cn++;
   }
 }
