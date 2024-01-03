@@ -377,8 +377,8 @@ function newConn(addr, id) {
     if (!csess.has(id)) return;
     const reconnectTimeout = setTimeout(_ => {
       newConn(addr, id);
-      client?.reconnectTimeout.delete(reconnectTimeout);
+      relay.client?.reconnectTimeout.delete(reconnectTimeout);
     }, reconnect_time || 5000); // As a bouncer server, We need to reconnect.
-    client?.reconnectTimeout.add(reconnectTimeout);
+    relay.client?.reconnectTimeout.add(reconnectTimeout);
   });
 }
