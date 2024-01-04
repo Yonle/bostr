@@ -77,7 +77,7 @@ module.exports = (ws, req) => {
         if (!authorized) return;
         if (data.length < 3) return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "expected subID a string. but got the otherwise."]));
-        if (typeof(data[2]) !== "object") return ws.send(JSON.stringify(["NOTICE", "expected filter to be obj, instead gives the otherwise."]));
+        if (typeof(data[2]) !== "object") return ws.send(JSON.stringify(["CLOSED", data[1], "expected filter to be obj, instead gives the otherwise."]));
         ws.subs.set(data[1], data[2]);
         ws.events.set(data[1], new Set());
         ws.pause_subs.delete(data[1]);
@@ -96,6 +96,7 @@ module.exports = (ws, req) => {
 
         cache_bc(data, ws.id);
         direct_bc(data, ws.id);
+        ws.send(JSON.stringify(["CLOSED", data[1], ""]));
         break;
       case "AUTH":
         if (auth(authKey, data[1], ws, req)) {
