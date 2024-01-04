@@ -3,7 +3,7 @@ const { verifySignature, validateEvent, nip19 } = require("nostr-tools");
 const auth = require("./auth.js");
 const nip42 = require("./nip42.js");
 
-let { relays, approved_publishers, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, eose_timeout, max_eose_score, cache_relays, max_orphan_sess } = require("./config");
+let { relays, approved_publishers, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, eose_timeout, max_eose_score, cache_relays, max_orphan_sess, broadcast_ratelimit } = require("./config");
 
 const socks = new Set();
 const csess = new Map();
@@ -22,6 +22,7 @@ module.exports = (ws, req) => {
   let authKey = null;
   let authorized = true;
   let orphan = getOrphanSess(); // if available
+  let lastEvent = Date.now();
 
   ws.id = orphan || (process.pid + Math.floor(Math.random() * 1000) + "_" + csess.size);
   ws.subs = new Map(); // contains filter submitted by clients. per subID
@@ -68,6 +69,13 @@ module.exports = (ws, req) => {
           !approved_publishers?.includes(data[1].pubkey)
         ) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rejected: unauthorized"]));
 
+        if (broadcast_ratelimit && (broadcast_ratelimit > (Date.now() - lastEvent))) {
+          lastEvent = Date.now();
+          return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rate-limited: request too fast."]));
+        }
+
+        lastEvent = Date.now();
+
         ws.my_events.add(data[1]);
         direct_bc(data, ws.id);
         cache_bc(data, ws.id);
@@ -78,7 +86,10 @@ module.exports = (ws, req) => {
         if (data.length < 3) return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: expected subID a string. but got the otherwise."]));
         if (typeof(data[2]) !== "object") return ws.send(JSON.stringify(["CLOSED", data[1], "error: expected filter to be obj, instead gives the otherwise."]));
-        if (ws.subs.has(data[1])) return ws.send(JSON.stringify(["CLOSED", data[1], "duplicate: this sub is already opened."]));
+        if (ws.subs.has(data[1])) {
+          direct_bc(["CLOSE", data[1]], ws.id);
+          cache_bc(["CLOSE", data[1]], ws.id);
+        }
         ws.subs.set(data[1], data.slice(2));
         ws.events.set(data[1], new Set());
         ws.pause_subs.delete(data[1]);
@@ -108,6 +119,7 @@ module.exports = (ws, req) => {
           csess.set(ws.id, ws);
           if (!orphan) newsess(ws.id);
           authorized = true;
+          lastEvent = Date.now();
         }
         break;
       default:

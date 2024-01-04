@@ -44,6 +44,13 @@ module.exports = {
   // Tip : The bigger = The more accurate EOSE, The less = EOSE sent way earlier.
   max_eose_score: 0,
 
+  // Client event broadcast ratelimit in milisecond.
+  // Client only able to broadcast new event to this bouncer after <broadcast_ratelimit>.
+  broadcast_ratelimit: 700,
+
+  // Incomming websocket connection ratelimit in milisecond.
+  incomming_ratelimit: 3300,
+
   // A whitelist of users public keys who could use this bouncer.
   // Leaving this empty will allow everyone to use this bouncer.
   // NOTE: - Require NIP-42 compatible nostr client.

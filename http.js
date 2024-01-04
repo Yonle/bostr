@@ -11,6 +11,7 @@ const log = _ => console.log(process.pid, curD(), "-", _);
 // Server
 const server = http.createServer({ noDelay: true })
 const wss = new WebSocket.WebSocketServer({ noServer: true });
+const lastConn = new Map();
 
 server.on('request', (req, res) => {
   log(`${req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address} - ${req.method} ${req.url}`)
@@ -40,6 +41,16 @@ server.on('request', (req, res) => {
 });
 
 server.on('upgrade', (req, sock, head) => {
+  const ip = req.headers["x-forwarded-for"]?.split(",")[0] || sock.address()?.address;
+  const lv = lastConn.get(ip) // last visit
+  if (config.incomming_ratelimit && (config.incomming_ratelimit > (Date.now() - lv))) {
+    lastConn.set(ip, Date.now());
+    return sock.destroy(); // destroy.
+  }
+
+  lastConn.set(ip, Date.now());
+
+  req.on('close', _ => lastConn.set(ip, Date.now()));
   wss.handleUpgrade(req, sock, head, _ => bouncer(_, req));
 });
 
