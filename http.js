@@ -41,6 +41,11 @@ server.on('request', (req, res) => {
 });
 
 server.on('upgrade', (req, sock, head) => {
+  for (i of lastConn) {
+    if (config.incomming_ratelimit > (Date.now() - i[1])) continue;
+    lastConn.delete(i[0]);
+  }
+
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || sock.address()?.address;
   const lv = lastConn.get(ip) // last visit
   if (config.incomming_ratelimit && (config.incomming_ratelimit > (Date.now() - lv))) {
