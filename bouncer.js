@@ -76,9 +76,10 @@ module.exports = (ws, req) => {
       case "REQ":
         if (!authorized) return;
         if (data.length < 3) return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
-        if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "expected subID a string. but got the otherwise."]));
-        if (typeof(data[2]) !== "object") return ws.send(JSON.stringify(["CLOSED", data[1], "expected filter to be obj, instead gives the otherwise."]));
-        ws.subs.set(data[1], data[2]);
+        if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: expected subID a string. but got the otherwise."]));
+        if (typeof(data[2]) !== "object") return ws.send(JSON.stringify(["CLOSED", data[1], "error: expected filter to be obj, instead gives the otherwise."]));
+        if (ws.subs.has(data[1])) return ws.send(JSON.stringify(["CLOSED", data[1], "duplicate: this sub is already opened."]));
+        ws.subs.set(data[1], data.slice(2));
         ws.events.set(data[1], new Set());
         ws.pause_subs.delete(data[1]);
         bc(data, ws.id);
@@ -88,6 +89,7 @@ module.exports = (ws, req) => {
       case "CLOSE":
         if (!authorized) return;
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
+        if (!ws.subs.has(data[1])) return ws.send(JSON.stringify(["CLOSED", data[1], "error: this sub is not opened."]));
         ws.subs.delete(data[1]);
         ws.events.delete(data[1]);
         ws.pendingEOSE.delete(data[1]);
@@ -103,7 +105,6 @@ module.exports = (ws, req) => {
           ws.pubkey = data[1].pubkey;
           console.log(process.pid, "---", ws.id, "successfully authorized as", ws.pubkey, private_keys[ws.pubkey] ? "(admin)" : "(user)");
           if (authorized) return;
-          // if orphan, ignore
           csess.set(ws.id, ws);
           updateSess(ws.id);
           if (!orphan) newsess(ws.id);
@@ -285,7 +286,7 @@ function newConn(addr, id) {
     }
 
     for (i of relay.client.subs) {
-      relay.send(JSON.stringify(["REQ", i[0], i[1]]));
+      relay.send(JSON.stringify(["REQ", i[0], ...i[1]]));
     }
   });
 
