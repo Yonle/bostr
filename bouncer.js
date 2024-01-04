@@ -120,7 +120,10 @@ module.exports = (ws, req) => {
   ws.on('error', console.error);
   ws.on('close', _ => {
     console.log(process.pid, "---", "Sock", ws.id, "has disconnected.", `(${howManyOrphanSess()+1} orphans)`);
-    if (csess.has(ws.id)) csess.set(ws.id, null); // set as orphan.
+    if (csess.has(ws.id)) {
+      csess.set(ws.id, null); // set as orphan.
+      updateSess(ws.id); // change relays relay.client object
+    }
 
     for (i of ws.EOSETimeout) {
       clearTimeout(i[1]);
