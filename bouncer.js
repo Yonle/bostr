@@ -48,7 +48,7 @@ module.exports = (ws, req) => {
     ws.send(JSON.stringify(["AUTH", authKey]));
   }
 
-  console.log(process.pid, `->- ${req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address} connected as ${ws.id} ${orphan ? "(orphan reused)" : ""}`);
+  console.log(process.pid, `->- ${req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address} connected as ${ws.id} ${orphan ? "(orphan reused) " : ""}[${req.headers["user-agent"] || ""}]`);
   ws.on("message", data => {
     try {
       data = JSON.parse(data);

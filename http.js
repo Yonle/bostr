@@ -14,7 +14,7 @@ const wss = new WebSocket.WebSocketServer({ noServer: true });
 const lastConn = new Map();
 
 server.on('request', (req, res) => {
-  log(`${req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address} - ${req.method} ${req.url}`)
+  log(`${req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address} - ${req.method} ${req.url} [${req.headers["user-agent"] || ""}]`)
 
   if (req.headers.accept?.includes("application/nostr+json"))
     return res.writeHead(200, {
@@ -49,6 +49,7 @@ server.on('upgrade', (req, sock, head) => {
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || sock.address()?.address;
   const lv = lastConn.get(ip) // last visit
   if (config.incomming_ratelimit && (config.incomming_ratelimit > (Date.now() - lv))) {
+    log(`Rejected connection from ${ip} as the last connection was ${Date.now() - lv} ms ago.`);
     lastConn.set(ip, Date.now());
     return sock.destroy(); // destroy.
   }
