@@ -270,7 +270,8 @@ function newConn(addr, id) {
   const relay = new WebSocket(addr, {
     headers: {
       "User-Agent": "Bostr; The nostr relay bouncer; https://github.com/Yonle/bostr"
-    }
+    },
+    noDelay: true
   });
 
   relay.id = id;

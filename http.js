@@ -9,7 +9,7 @@ const curD = _ => (new Date()).toLocaleString("ia");
 const log = _ => console.log(process.pid, curD(), "-", _);
 
 // Server
-const server = http.createServer()
+const server = http.createServer({ noDelay: true })
 const wss = new WebSocket.WebSocketServer({ noServer: true });
 
 server.on('request', (req, res) => {
