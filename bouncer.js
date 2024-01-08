@@ -57,7 +57,7 @@ module.exports = (ws, req) => {
         JSON.stringify(["NOTICE", "error: bad JSON."])
       )
     }
-
+console.log(data)
     switch (data[0]) {
       case "EVENT":
         if (!authorized) return;

@@ -102,6 +102,9 @@ module.exports = {
     "version": require("./package.json").version
   },
 
+  // Path to favicon file.
+  favicon: "",
+
   // Cache relays
   // Used for caching received events from <relays> to reduce bandwidth waste.
   // Keeping this empty will disable caching function.
