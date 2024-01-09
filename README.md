@@ -38,6 +38,8 @@ Or run in background with `tmux`:
 tmux new -d "node index.js"
 ```
 
+When configuring reverse proxy, Ensure that `x-forwarded-proto` header was set as `https`.
+
 ## Environment Variable
 - `CLUSTERS` - Run Bostr with specified numbers of clusters.
 - `LOG_ABOUT_RELAYS` - Whenever to log about relay connections

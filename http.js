@@ -36,7 +36,7 @@ server.on('request', (req, res) => {
 
     res.write(`\nI have ${wss.clients.size} clients currently connected to this bouncer${(process.env.CLUSTERS || config.clusters) > 1 ? " on this cluster" : ""}.\n`);
     if (config?.authorized_keys?.length) res.write("\nNOTE: This relay has configured for personal use only. Only authorized users could use this bostr relay.\n");
-    res.write(`\nConnect to this bouncer with nostr client: ws://${req.headers.host}${req.url} or wss://${req.headers.host}${req.url}\n\n---\n`);
+    res.write(`\nConnect to this bouncer with nostr client: ${req.headers["x-forwarded-proto"]?.replace(/http/i, "ws") || "ws"}://${req.headers.host}${req.url}\n\n---\n`);
     res.end(`Powered by Bostr (${version}) - Open source Nostr bouncer\nhttps://github.com/Yonle/bostr`);
   } else if (req.url.startsWith("/favicon") && favicon) {
     res.writeHead(200, { "Content-Type": "image/" + config.favicon?.split(".").pop() });
