@@ -6,8 +6,10 @@ module.exports = {
   address: "0.0.0.0",
   port: "8080",
 
-  // If you want to use HTTPS, specify the absolute path of the private key/certificate in the following options.
-  // NOTE: If you specify the value below, the server will no longer accept insecure connections.
+  // Standalone HTTPS server. Normally bostr is accepting unsecured connections.
+  // Specifying the absolute path of the private key/certificate will make bostr to only accept secured connections.
+  //
+  // Tip: You do not need this if you are running bostr behind reverse proxy.
   https: {
     privKey: "",
     certificate: "",
