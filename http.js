@@ -2,6 +2,7 @@ const { version } = require("./package.json");
 const WebSocket = require("ws");
 const config = require("./config");
 const http = require("http");
+const http2 = require("http2");
 const fs = require("fs");
 const bouncer = require(`./bouncer.js`);
 
@@ -10,7 +11,24 @@ const curD = _ => (new Date()).toLocaleString("ia");
 const log = _ => console.log(process.pid, curD(), "-", _);
 
 // Server
-const server = http.createServer({ noDelay: true })
+let dyn_proto
+let ws_proto = "ws";
+if(fs.existsSync(config.https?.privKey) && fs.existsSync(config.https?.certificate)) {
+  let http2_options = {
+    allowHTTP1: true,
+    key: fs.readFileSync(config.https?.privKey),
+    cert: fs.readFileSync(config.https?.certificate),
+    noDelay: true,
+    dhparam: "auto",
+    paddingStrategy: http2.constants.PADDING_STRATEGY_MAX
+  }
+  if(fs.existsSync(config.https?.ticketKey)) http2_options.ticketKeys = fs.readFileSync(config.https?.ticketKey);
+  dyn_proto = http2.createSecureServer(http2_options);
+  ws_proto = "wss";
+} else {
+  dyn_proto = http.createServer({ noDelay: true })
+}
+const server = dyn_proto;
 const wss = new WebSocket.WebSocketServer({ noServer: true });
 const lastConn = new Map();
 
@@ -36,7 +54,7 @@ server.on('request', (req, res) => {
 
     res.write(`\nI have ${wss.clients.size} clients currently connected to this bouncer${(process.env.CLUSTERS || config.clusters) > 1 ? " on this cluster" : ""}.\n`);
     if (config?.authorized_keys?.length) res.write("\nNOTE: This relay has configured for personal use only. Only authorized users could use this bostr relay.\n");
-    res.write(`\nConnect to this bouncer with nostr client: ${req.headers["x-forwarded-proto"]?.replace(/http/i, "ws") || "ws"}://${req.headers.host}${req.url}\n\n---\n`);
+    res.write(`\nConnect to this bouncer with nostr client: ${req.headers["x-forwarded-proto"]?.replace(/http/i, "ws") || ws_proto}://${req.headers.host}${req.url}\n\n---\n`);
     res.end(`Powered by Bostr (${version}) - Open source Nostr bouncer\nhttps://github.com/Yonle/bostr`);
   } else if (req.url.startsWith("/favicon") && favicon) {
     res.writeHead(200, { "Content-Type": "image/" + config.favicon?.split(".").pop() });
@@ -67,5 +85,5 @@ server.on('upgrade', (req, sock, head) => {
 });
 
 const listened = server.listen(process.env.PORT || config.port, config.address || "0.0.0.0", _ => {
-  log("Bostr is now listening on " + "ws://" + (config.address || "0.0.0.0") + ":" + config.port);
+  log("Bostr is now listening on " + `${ws_proto}://` + (config.address || "0.0.0.0") + ":" + config.port);
 });
