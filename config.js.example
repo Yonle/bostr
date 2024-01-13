@@ -5,6 +5,12 @@ module.exports = {
   // Server listener [Required]
   address: "0.0.0.0",
   port: "8080",
+  
+  // If you want to use HTTPS without reverse proxy, you may change the following options.
+  https: {
+    privKey: "/path/to/privkey.pem",
+    certificate: "/path/to/fullchain.pem"
+  },
 
   // Clusters.
   // 0 will make bostr run clusters with available parallelism / CPU cores.
