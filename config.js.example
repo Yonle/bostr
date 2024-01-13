@@ -6,10 +6,11 @@ module.exports = {
   address: "0.0.0.0",
   port: "8080",
   
-  // If you want to use HTTPS without reverse proxy, you may change the following options.
+  // If you want to use HTTPS, specify the absolute path of the private key/certificate in the following options.
+  // NOTE: If you specify the value below, the server will no longer accept insecure connections.
   https: {
-    privKey: "/path/to/privkey.pem",
-    certificate: "/path/to/fullchain.pem"
+    privKey: "",
+    certificate: ""
   },
 
   // Clusters.
