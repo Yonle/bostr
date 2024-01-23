@@ -88,8 +88,7 @@ server.on('upgrade', (req, sock, head) => {
 
   lastConn.set(ip, Date.now());
 
-  req.on('close', _ => lastConn.set(ip, Date.now()));
-  wss.handleUpgrade(req, sock, head, _ => bouncer(_, req));
+  wss.handleUpgrade(req, sock, head, _ => bouncer(_, req, _ => lastConn.set(ip, Date.now())));
 });
 
 const listened = server.listen(process.env.PORT || config.port, config.address || "0.0.0.0", _ => {

@@ -20,7 +20,7 @@ if (relays.length < max_eose_score) max_eose_score = 0;
 cache_relays = cache_relays?.map(i => i.endsWith("/") ? i : i + "/");
 
 // CL - User socket
-module.exports = (ws, req) => {
+module.exports = (ws, req, onClose) => {
   let authKey = null;
   let authorized = true;
   let orphan = getOrphanSess(); // if available
@@ -134,6 +134,7 @@ module.exports = (ws, req) => {
 
   ws.on('error', console.error);
   ws.on('close', _ => {
+    onClose();
     console.log(process.pid, "---", "Sock", ws.id, "has disconnected.", `(${howManyOrphanSess()+1} orphans)`);
     if (csess.has(ws.id)) {
       csess.set(ws.id, null); // set as orphan.
@@ -206,7 +207,7 @@ function direct_bc(msg, id) {
   for (const sock of socks) {
     if (cache_relays?.includes(sock.url)) continue;
     if (sock.id !== id) continue;
-    if (sock.readyState >= 2) return socks.delete(sock);
+    if (sock.readyState !== 2) continue;
 
     // skip the ratelimit after <config.upstream_ratelimit_expiration>
     if ((upstream_ratelimit_expiration) > (Date.now() - sock.ratelimit)) continue;
@@ -218,7 +219,7 @@ function cache_bc(msg, id) {
   for (const sock of socks) {
     if (!cache_relays?.includes(sock.url)) continue;
     if (sock.id !== id) continue;
-    if (sock.readyState >= 2) return socks.delete(sock);
+    if (sock.readyState !== 2) continue;
     sock.send(JSON.stringify(msg));
   }
 }
@@ -291,7 +292,6 @@ function newConn(addr, id, reconn_t = 0) {
     const client = csess.get(id);
     if (!csess.has(id)) return relay.terminate();
     reconn_t = 0;
-    socks.add(relay); // Add this socket session to [socks]
     if (log_about_relays) console.log(process.pid, "---", `[${id}] [${socks.size}/${relays.length*csess.size}] ${relay.url} is connected ${!client ? "(orphan)" : ""}`);
 
     if (!client) return; // is orphan, do nothing.
@@ -403,7 +403,7 @@ function newConn(addr, id, reconn_t = 0) {
 
   relay.on('close', _ => {
     const client = csess.get(id);
-    socks.delete(relay) // Remove this socket session from [socks] list
+    socks.delete(relay); // Remove this socket session from [socks] list
     if (log_about_relays) console.log(process.pid, "-!-", `[${id}] [${socks.size}/${relays.length*csess.size}]`, "Disconnected from", relay.url);
 
     if (!csess.has(id)) return;
@@ -421,4 +421,6 @@ function newConn(addr, id, reconn_t = 0) {
     delete relays[relays.indexOf(addr)];
     console.log(process.pid, "-!-", `${relay.url} give status code ${res.statusCode}. Not (re)connect with new session again.`);
   });
+
+  socks.add(relay); // Add this socket session to [socks]
 }
