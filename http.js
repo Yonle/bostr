@@ -1,3 +1,4 @@
+"use strict";
 const { version } = require("./package.json");
 const WebSocket = require("ws");
 const config = require("./config");

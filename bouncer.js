@@ -1,3 +1,5 @@
+"use strict";
+const { version } = require("./package.json");
 const WebSocket = require("ws");
 const { verifySignature, validateEvent, nip19 } = require("nostr-tools");
 const auth = require("./auth.js");
@@ -137,18 +139,18 @@ module.exports = (ws, req) => {
       csess.set(ws.id, null); // set as orphan.
     }
 
-    for (i of ws.EOSETimeout) {
+    for (const i of ws.EOSETimeout) {
       clearTimeout(i[1]);
     }
 
     if (!authorized) return;
 
-    for (i of ws.reconnectTimeout) {
+    for (const i of ws.reconnectTimeout) {
       clearTimeout(i);
       // Let the garbage collector do the thing. No need to add ws.reconnectTimeout.delete(i);
     }
 
-    for (i of ws.subs) {
+    for (const i of ws.subs) {
       direct_bc(["CLOSE", i[0]], ws.id);
       cache_bc(["CLOSE", i[0]], ws.id);
     }
@@ -201,7 +203,7 @@ function newsess(id) {
 
 // WS - Broadcast message to every existing sockets
 function direct_bc(msg, id) {
-  for (sock of socks) {
+  for (const sock of socks) {
     if (cache_relays?.includes(sock.url)) continue;
     if (sock.id !== id) continue;
     if (sock.readyState >= 2) return socks.delete(sock);
@@ -213,7 +215,7 @@ function direct_bc(msg, id) {
 }
 
 function cache_bc(msg, id) {
-  for (sock of socks) {
+  for (const sock of socks) {
     if (!cache_relays?.includes(sock.url)) continue;
     if (sock.id !== id) continue;
     if (sock.readyState >= 2) return socks.delete(sock);
@@ -229,7 +231,7 @@ function bc(msg, id) {
 // WS - Terminate all existing sockets that were for <id>
 function terminate_sess(id) {
   csess.delete(id);
-  for (sock of socks) {
+  for (const sock of socks) {
     if (sock.id !== id) continue;
     sock.terminate();
     socks.delete(sock);
@@ -246,7 +248,7 @@ function onClientDisconnect() {
 }
 
 function getOrphanSess() {
-  for (sess of csess) {
+  for (const sess of csess) {
     if (sess[1] !== null) continue;
     return sess[0];
     break;
@@ -255,7 +257,7 @@ function getOrphanSess() {
 
 function howManyOrphanSess() {
   let howMany = 0;
-  for (sess of csess) {
+  for (const sess of csess) {
     if (sess[1] !== null) continue;
     howMany++
   }
@@ -265,7 +267,7 @@ function howManyOrphanSess() {
 
 function clearOrphanSess(l) {
   let cn = 0;
-  for (sess of csess) {
+  for (const sess of csess) {
     if (cn >= l) break;
     if (sess[1] !== null) continue;
     terminate_sess(sess[0]);
@@ -278,7 +280,7 @@ function newConn(addr, id, reconn_t = 0) {
   if (!csess.has(id)) return;
   const relay = new WebSocket(addr, {
     headers: {
-      "User-Agent": "Bostr; The nostr relay bouncer; https://github.com/Yonle/bostr"
+      "User-Agent": `Bostr (v${version}); The nostr relay bouncer; https://github.com/Yonle/bostr`
     },
     noDelay: true
   });
@@ -293,11 +295,11 @@ function newConn(addr, id, reconn_t = 0) {
     if (log_about_relays) console.log(process.pid, "---", `[${id}] [${socks.size}/${relays.length*csess.size}] ${relay.url} is connected ${!client ? "(orphan)" : ""}`);
 
     if (!client) return; // is orphan, do nothing.
-    for (i of client.my_events) {
+    for (const i of client.my_events) {
       relay.send(JSON.stringify(["EVENT", i]));
     }
 
-    for (i of client.subs) {
+    for (const i of client.subs) {
       relay.send(JSON.stringify(["REQ", i[0], ...i[1]]));
     }
   });
