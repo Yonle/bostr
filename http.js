@@ -73,7 +73,7 @@ server.on('request', (req, res) => {
 });
 
 server.on('upgrade', (req, sock, head) => {
-  for (i of lastConn) {
+  for (const i of lastConn) {
     if (config.incomming_ratelimit > (Date.now() - i[1])) continue;
     lastConn.delete(i[0]);
   }
