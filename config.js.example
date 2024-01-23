@@ -26,6 +26,14 @@ module.exports = {
   // Time before reconnect to relays in milliseconds.
   reconnect_time: 5000,
 
+  // Ratelimit expiration after ratelimit from upstream relay in miliseconds.
+  // Setting as 0 will disable ratelimit handling.
+  upstream_ratelimit_expiration: 10000,
+
+  // Maximum subscriptions that client could open.
+  // Setting as -1 will disable max subscription limit.
+  max_client_subs: -1,
+
   // Maximum amount of orphan sessions.
   // Setting to 0 disables orphan session function.
   max_orphan_sess: 7,
