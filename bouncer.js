@@ -25,6 +25,7 @@ module.exports = (ws, req, onClose) => {
   let authorized = true;
   let orphan = getOrphanSess(); // if available
   let lastEvent = Date.now();
+  let ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address;
 
   ws.id = orphan || (process.pid + Math.floor(Math.random() * 1000) + "_" + csess.size);
   ws.subs = new Map(); // contains filter submitted by clients. per subID
@@ -51,7 +52,7 @@ module.exports = (ws, req, onClose) => {
     ws.send(JSON.stringify(["AUTH", authKey]));
   }
 
-  console.log(process.pid, `->- ${req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address} connected as ${ws.id} ${orphan ? "(orphan reused) " : ""}[${req.headers["user-agent"] || ""}]`);
+  console.log(process.pid, `->- ${ip} (${ws.id}) connected ${orphan ? "(orphan reused) " : ""}[${req.headers["user-agent"] || ""}]`);
   ws.on("message", data => {
     try {
       data = JSON.parse(data);
@@ -135,7 +136,7 @@ module.exports = (ws, req, onClose) => {
   ws.on('error', console.error);
   ws.on('close', _ => {
     onClose();
-    console.log(process.pid, "---", "Sock", ws.id, "has disconnected.", `(${howManyOrphanSess()+1} orphans)`);
+    console.log(process.pid, "---", `${ip} (${ws.id}) disconnected (${howManyOrphanSess()+1} orphans)`);
     if (csess.has(ws.id)) {
       csess.set(ws.id, null); // set as orphan.
     }
