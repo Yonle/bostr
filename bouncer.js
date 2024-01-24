@@ -244,7 +244,7 @@ function onClientDisconnect() {
   const orphanSessNum = howManyOrphanSess();
   const max = max_orphan_sess || 0;
   if (orphanSessNum > max) {
-    console.log(process.pid, `There are ${orphanSessNum} orphan sessions. I will clear ${orphanSessNum - max} orphan sessions.`);
+    if (max) console.log(process.pid, `There are ${orphanSessNum} orphan sessions. I will clear ${orphanSessNum - max} orphan sessions.`);
     clearOrphanSess(orphanSessNum - max);
   }
 }
