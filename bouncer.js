@@ -329,6 +329,7 @@ function newConn(addr, id, reconn_t = 0) {
         const cFilter = client.subs.get(data[1])[0];
         if (Array.isArray(cFilter?.ids) && !cFilter.ids.includes(data[2].id)) return;
         if (Array.isArray(cFilter?.authors) && !cFilter.authors.includes(data[2].pubkey)) return;
+        if (Array.isArray(cFilter?.kinds) && !cFilter.kinds.includes(data[2].kind)) return;
         if (cFilter?.since > data[2].created_at) return;
         if (data[2].created_at > cFilter?.until) return;
         const NotInSearchQuery = "search" in cFilter && !data[2]?.content?.toLowerCase().includes(cFilter.search.toLowerCase());
