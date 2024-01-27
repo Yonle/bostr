@@ -136,6 +136,7 @@ module.exports = (ws, req, onClose) => {
   ws.on('error', console.error);
   ws.on('close', _ => {
     onClose();
+
     console.log(process.pid, "---", `${ip} (${ws.id}) disconnected (${howManyOrphanSess()+1} orphans)`);
     if (csess.has(ws.id)) {
       csess.set(ws.id, null); // set as orphan.
@@ -145,7 +146,8 @@ module.exports = (ws, req, onClose) => {
       clearTimeout(i[1]);
     }
 
-    if (!authorized) return;
+    // unauthorized session must be destroyed.
+    if (!authorized) terminate_sess(ws.id);
 
     for (const i of ws.reconnectTimeout) {
       clearTimeout(i);
