@@ -23,6 +23,9 @@ module.exports = {
   // Log about bouncer connection with relays?
   log_about_relays: false,
 
+  // Use deflate compression for websocket.
+  perMessageDeflate: true,
+
   // Time before reconnect to relays in milliseconds.
   reconnect_time: 5000,
 

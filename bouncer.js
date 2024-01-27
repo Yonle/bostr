@@ -284,7 +284,8 @@ function newConn(addr, id, reconn_t = 0) {
     headers: {
       "User-Agent": `Bostr (v${version}); The nostr relay bouncer; https://github.com/Yonle/bostr`
     },
-    noDelay: true
+    noDelay: true,
+    allowSynchronousEvents: true
   });
 
   relay.id = id;

@@ -37,7 +37,11 @@ if (
   server.isStandaloneHTTPS = false;
 }
 
-const wss = new WebSocket.WebSocketServer({ noServer: true });
+const wss = new WebSocket.WebSocketServer({
+  noServer: true,
+  allowSynchronousEvents: true,
+  perMessageDeflate: config.perMessageDeflate || true
+});
 const lastConn = new Map();
 
 const favicon = fs.existsSync(config.favicon) ? fs.readFileSync(config.favicon) : null;
