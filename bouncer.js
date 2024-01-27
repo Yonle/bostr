@@ -208,7 +208,7 @@ function direct_bc(msg, id) {
   for (const sock of socks) {
     if (cache_relays?.includes(sock.url)) continue;
     if (sock.id !== id) continue;
-    if (sock.readyState !== 2) continue;
+    if (sock.readyState !== 1) continue;
 
     // skip the ratelimit after <config.upstream_ratelimit_expiration>
     if ((upstream_ratelimit_expiration) > (Date.now() - sock.ratelimit)) continue;
@@ -220,7 +220,7 @@ function cache_bc(msg, id) {
   for (const sock of socks) {
     if (!cache_relays?.includes(sock.url)) continue;
     if (sock.id !== id) continue;
-    if (sock.readyState !== 2) continue;
+    if (sock.readyState !== 1) continue;
     sock.send(JSON.stringify(msg));
   }
 }
