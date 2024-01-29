@@ -35,7 +35,8 @@ module.exports = (ws, req, onClose) => {
   ws.pendingEOSE = new Map(); // each contain subID
   ws.EOSETimeout = new Map(); // per subID
   ws.reconnectTimeout = new Set(); // relays timeout() before reconnection. Only use after client disconnected.
-  //ws.subalias = new Map();
+  ws.subalias = new Map();
+  ws.fakesubalias = new Map();
   ws.pubkey = null;
 
   if (authorized_keys?.length) {
@@ -86,33 +87,43 @@ module.exports = (ws, req, onClose) => {
         cache_bc(data, ws.id);
         ws.send(JSON.stringify(["OK", data[1]?.id, true, ""]));
         break;
-      case "REQ":
+      case "REQ": {
         if (!authorized) return;
         if (data.length < 3) return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: expected subID a string. but got the otherwise."]));
         if (typeof(data[2]) !== "object") return ws.send(JSON.stringify(["CLOSED", data[1], "error: expected filter to be obj, instead gives the otherwise."]));
         if ((max_client_subs !== -1) && (ws.subs.size > max_client_subs)) return ws.send(JSON.stringify(["CLOSED", data[1], "rate-limited: too many subscriptions."]));
         if (ws.subs.has(data[1])) return ws.send(JSON.stringify(["CLOSED", data[1], "duplicate: subscription already opened"]));
-        ws.subs.set(data[1], data.slice(2));
-        ws.events.set(data[1], new Set());
-        ws.pause_subs.delete(data[1]);
+        const origID = data[1];
+        const faked = Date.now() + Math.random().toString(36);
+        ws.subs.set(origID, data.slice(2));
+        ws.events.set(origID, new Set());
+        ws.pause_subs.delete(origID);
+        ws.subalias.set(faked, origID);
+        ws.fakesubalias.set(origID, faked);
+
+        data[1] = faked;
         bc(data, ws.id);
-        if (data[2]?.limit < 1) return ws.send(JSON.stringify(["EOSE", data[1]]));
-        ws.pendingEOSE.set(data[1], 0);
+        if (data[2]?.limit < 1) return ws.send(JSON.stringify(["EOSE", origID]));
+        ws.pendingEOSE.set(origID, 0);
         break;
+      }
       case "CLOSE":
         if (!authorized) return;
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
-        if (!ws.subs.has(data[1])) return ws.send(JSON.stringify(["CLOSED", data[1], "error: this sub is not opened."]));
-        ws.subs.delete(data[1]);
-        ws.events.delete(data[1]);
-        ws.pendingEOSE.delete(data[1]);
-        ws.pause_subs.delete(data[1]);
-        cancel_EOSETimeout(ws.id, data[1]);
+        if (!ws.subalias.has(data[1])) return ws.send(JSON.stringify(["CLOSED", data[1], "error: this sub is not opened."]));
+        const origID = data[1];
+        const faked = ws.fakesubalias.get(origID);
+        ws.subs.delete(origID);
+        ws.events.delete(origID);
+        ws.pendingEOSE.delete(origID);
+        ws.pause_subs.delete(origID);
+        cancel_EOSETimeout(ws.id, origID);
 
+        data[1] = faked;
         cache_bc(data, ws.id);
         direct_bc(data, ws.id);
-        ws.send(JSON.stringify(["CLOSED", data[1], ""]));
+        ws.send(JSON.stringify(["CLOSED", origID, ""]));
         break;
       case "AUTH":
         if (auth(authKey, data[1], ws, req)) {
@@ -303,7 +314,7 @@ function newConn(addr, id, reconn_t = 0) {
     }
 
     for (const i of client.subs) {
-      relay.send(JSON.stringify(["REQ", i[0], ...i[1]]));
+      relay.send(JSON.stringify(["REQ", client.fakesubalias.get(i[0]), ...i[1]]));
     }
   });
 
@@ -319,7 +330,8 @@ function newConn(addr, id, reconn_t = 0) {
     switch (data[0]) {
       case "EVENT": {
         if (data.length < 3 || typeof(data[1]) !== "string" || typeof(data[2]) !== "object") return;
-        if (!client.subs.has(data[1])) return;
+        if (!client.subalias.has(data[1])) return;
+        data[1] = client.subalias.get(data[1]);
         timeoutEOSE(id, data[1]);
         if (client.pause_subs.has(data[1]) && !cache_relays?.includes(relay.url)) return;
 
@@ -361,6 +373,8 @@ function newConn(addr, id, reconn_t = 0) {
         break;
       }
       case "EOSE":
+        if (!client.subalias.has(data[1])) return;
+        data[1] = client.subalias.get(data[1]);
         if (!client.pendingEOSE.has(data[1])) return;
         client.pendingEOSE.set(data[1], client.pendingEOSE.get(data[1]) + 1);
         if (log_about_relays) console.log(process.pid, "---", `[${id}]`, `got EOSE from ${relay.url} for ${data[1]}. There are ${client.pendingEOSE.get(data[1])} EOSE received out of ${Array.from(socks).filter(sock => sock.id === id).length} connected relays.`);
