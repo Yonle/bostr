@@ -56,7 +56,10 @@ module.exports = {
   pause_on_limit: false,
 
   // EOSE timeout in milliseconds
-  eose_timeout: 2300,
+  // Setting as 0 will disable this feature.
+  //
+  // Enabling this may make CPU usage to be intensive
+  eose_timeout: 0,
 
   // Maximum of received EOSE from relays to send EOSE to client.
   // Normally, waiting EOSE from 3 relays should be enough. Leaving it with 0 equals wait for every established relays.

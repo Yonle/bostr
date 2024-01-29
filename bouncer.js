@@ -35,6 +35,7 @@ module.exports = (ws, req, onClose) => {
   ws.pendingEOSE = new Map(); // each contain subID
   ws.EOSETimeout = new Map(); // per subID
   ws.reconnectTimeout = new Set(); // relays timeout() before reconnection. Only use after client disconnected.
+  //ws.subalias = new Map();
   ws.pubkey = null;
 
   if (authorized_keys?.length) {
@@ -170,6 +171,7 @@ module.exports = (ws, req, onClose) => {
 
 // CL - Set up EOSE timeout
 function timeoutEOSE(id, subid) {
+  if (!eose_timeout) return;
   const c = csess.get(id);
   if (!c) return;
 
