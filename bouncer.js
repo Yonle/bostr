@@ -149,9 +149,8 @@ module.exports = (ws, req, onClose) => {
     onClose();
 
     console.log(process.pid, "---", `${ip} (${ws.id}) disconnected (${howManyOrphanSess()+1} orphans)`);
-    if (csess.has(ws.id)) {
+    if (csess.has(ws.id))
       csess.set(ws.id, null); // set as orphan.
-    }
 
     for (const i of ws.EOSETimeout) {
       clearTimeout(i[1]);
@@ -166,8 +165,8 @@ module.exports = (ws, req, onClose) => {
     }
 
     for (const i of ws.subs) {
-      direct_bc(["CLOSE", i[0]], ws.id);
-      cache_bc(["CLOSE", i[0]], ws.id);
+      direct_bc(["CLOSE", ws.fakesubalias.get(i[0])], ws.id);
+      cache_bc(["CLOSE", ws.fakesubalias.get(i[0])], ws.id);
     }
 
     onClientDisconnect();
