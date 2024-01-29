@@ -91,10 +91,7 @@ module.exports = (ws, req, onClose) => {
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: expected subID a string. but got the otherwise."]));
         if (typeof(data[2]) !== "object") return ws.send(JSON.stringify(["CLOSED", data[1], "error: expected filter to be obj, instead gives the otherwise."]));
         if ((max_client_subs !== -1) && (ws.subs.size > max_client_subs)) return ws.send(JSON.stringify(["CLOSED", data[1], "rate-limited: too many subscriptions."]));
-        if (ws.subs.has(data[1])) {
-          direct_bc(["CLOSE", data[1]], ws.id);
-          cache_bc(["CLOSE", data[1]], ws.id);
-        }
+        if (ws.subs.has(data[1])) return ws.send(JSON.stringify(["CLOSED", data[1], "duplicate: subscription already opened"]));
         ws.subs.set(data[1], data.slice(2));
         ws.events.set(data[1], new Set());
         ws.pause_subs.delete(data[1]);
