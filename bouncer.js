@@ -118,6 +118,8 @@ module.exports = (ws, req, onClose) => {
         ws.events.delete(origID);
         ws.pendingEOSE.delete(origID);
         ws.pause_subs.delete(origID);
+        ws.fakesubalias.delete(origID);
+        ws.subalias.delete(faked);
         cancel_EOSETimeout(ws.id, origID);
 
         data[1] = faked;
