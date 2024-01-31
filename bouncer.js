@@ -111,7 +111,7 @@ module.exports = (ws, req, onClose) => {
       case "CLOSE":
         if (!authorized) return;
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
-        if (!ws.subalias.has(data[1])) return ws.send(JSON.stringify(["CLOSED", data[1], "error: this sub is not opened."]));
+        if (!ws.fakesubalias.has(data[1])) return ws.send(JSON.stringify(["CLOSED", data[1], "error: this sub is not opened."]));
         const origID = data[1];
         const faked = ws.fakesubalias.get(origID);
         ws.subs.delete(origID);
