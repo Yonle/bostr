@@ -50,10 +50,10 @@ module.exports = {
   wait_eose: true,
 
   // Pause an subscription from receiving further events after reached to <filter.limit>
-  // Could save client's bandwidth, but may miss some events.
+  // Could save client's bandwidth. Disable this if you need to get more events.
   //
-  // Depending on <wait_eose> settings, It could either miss some events.
-  pause_on_limit: false,
+  // You may also need to adjust <max_eose_score>.
+  pause_on_limit: true,
 
   // EOSE timeout in milliseconds
   // Setting as 0 will disable this feature.
