@@ -361,8 +361,8 @@ function newConn(addr, id, reconn_t = 0) {
         // If it's at the limit, Send EOSE to client and delete pendingEOSE of subID
 
         // Skip if EOSE has been omitted
-        if (!client.pendingEOSE.has(data[1]) || !client.subs.get(data[1])[0]?.limit || client.pause_subs.has(data[1])) return;
-        if (client.events.get(data[1]).size >= client.subs.get(data[1])[0]?.limit) {
+        if (!client.pendingEOSE.has(data[1]) || !cFilter?.limit || !cFilter?.ids?.length || client.pause_subs.has(data[1])) return;
+        if (client.events.get(data[1]).size >= (cFilter?.ids?.length || cFilter?.limit)) {
           // Once reached to <filter.limit>, send EOSE to client.
           client.send(JSON.stringify(["EOSE", data[1]]));
           if (pause_on_limit || cache_relays?.includes(relay.url)) {
