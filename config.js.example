@@ -53,7 +53,7 @@ module.exports = {
   // Could save client's bandwidth. Disable this if you need to get more events.
   //
   // You may also need to adjust <max_eose_score>.
-  pause_on_limit: true,
+  pause_on_limit: false,
 
   // EOSE timeout in milliseconds
   // Setting as 0 will disable this feature.
