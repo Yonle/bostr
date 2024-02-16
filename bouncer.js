@@ -32,7 +32,6 @@ module.exports = (ws, req, onClose) => {
   ws.events = new Map(); // only to prevent the retransmit of the same event. per subID
   ws.my_events = new Set(); // for event retransmitting.
   ws.pendingEOSE = new Map(); // each contain subID
-  ws.EOSETimeout = new Map(); // per subID
   ws.reconnectTimeout = new Set(); // relays timeout() before reconnection. Only use after client disconnected.
   ws.subalias = new Map();
   ws.fakesubalias = new Map();
@@ -119,7 +118,6 @@ module.exports = (ws, req, onClose) => {
         ws.pause_subs.delete(origID);
         ws.fakesubalias.delete(origID);
         ws.subalias.delete(faked);
-        cancel_EOSETimeout(ws.id, origID);
 
         data[1] = faked;
         cache_bc(data, ws.id);
@@ -149,10 +147,6 @@ module.exports = (ws, req, onClose) => {
 
     console.log(process.pid, "---", `${ip} (${ws.id}) disconnected`);
 
-    for (const i of ws.EOSETimeout) {
-      clearTimeout(i[1]);
-    };
-
     for (const i of ws.reconnectTimeout) {
       clearTimeout(i);
       // Let the garbage collector do the thing. No need to add ws.reconnectTimeout.delete(i);
@@ -165,35 +159,6 @@ module.exports = (ws, req, onClose) => {
     csess.set(ws.id, ws);
     newsess(ws.id);
   }
-}
-
-// CL - Set up EOSE timeout
-function timeoutEOSE(id, subid) {
-  if (!eose_timeout) return;
-  const c = csess.get(id);
-  if (!c) return;
-
-  clearTimeout(c.EOSETimeout.get(subid));
-  c.EOSETimeout.set(subid, setTimeout(_ => timed_out_eose(id, subid), eose_timeout || 2300));
-}
-
-// CL - Handle timed out EOSE
-function timed_out_eose(id, subid) {
-  const c = csess.get(id);
-  if (!c) return;
-  c.EOSETimeout.delete(subid);
-  if (!c.pendingEOSE.has(subid)) return;
-
-  c.pendingEOSE.delete(subid);
-  if (c.pause_subs.has(subid)) return c.pause_subs.delete(subid);
-  c.send(JSON.stringify(["EOSE", subid]));
-}
-
-function cancel_EOSETimeout(id, subid) {
-  const c = csess.get(id);
-  if (!c) return;
-  clearTimeout(c.EOSETimeout.get(subid));
-  c.EOSETimeout.delete(subid);
 }
 
 // WS - New session for client $id
@@ -279,7 +244,6 @@ function newConn(addr, id, reconn_t = 0) {
         if (data.length < 3 || typeof(data[1]) !== "string" || typeof(data[2]) !== "object") return;
         if (!client.subalias.has(data[1])) return;
         data[1] = client.subalias.get(data[1]);
-        timeoutEOSE(id, data[1]);
         if (client.pause_subs.has(data[1]) && !cache_relays?.includes(relay.url)) return;
 
         // if filter.since > receivedEvent.created_at, skip
@@ -329,8 +293,6 @@ function newConn(addr, id, reconn_t = 0) {
         if (!cache_relays?.includes(relay.url)) {
           if (wait_eose && ((client.pendingEOSE.get(data[1]) < max_eose_score) || (client.pendingEOSE.get(data[1]) < Array.from(socks).filter(sock => sock.id === id).length))) return;
           if (client.pause_subs.has(data[1])) return client.pause_subs.delete(data[1]);
-
-          cancel_EOSETimeout(data[1]);
         } else {
           if (client.pendingEOSE.get(data[1]) < Array.from(socks).filter(sock => (sock.id === id) && cache_relays?.includes(sock.url)).length) return;
           // get the filter
