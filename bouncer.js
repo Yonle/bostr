@@ -5,7 +5,7 @@ const { verifySignature, validateEvent, nip19 } = require("nostr-tools");
 const auth = require("./auth.js");
 const nip42 = require("./nip42.js");
 
-let { relays, approved_publishers, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, eose_timeout, max_eose_score, cache_relays, max_orphan_sess, broadcast_ratelimit, upstream_ratelimit_expiration, max_client_subs } = require("./config");
+let { relays, approved_publishers, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, max_eose_score, cache_relays, broadcast_ratelimit, upstream_ratelimit_expiration, max_client_subs } = require("./config");
 
 const csess = new Map();
 
@@ -253,9 +253,9 @@ function newConn(addr, id, reconn_t = 0) {
     const client = csess.get(id);
     if (!csess.has(id)) return relay.terminate();
     reconn_t = 0;
-    if (log_about_relays) console.log(process.pid, "---", `[${id}] ${relay.url} is connected ${!client ? "(orphan)" : ""}`);
+    if (log_about_relays) console.log(process.pid, "---", `[${id}] ${relay.url} is connected`);
 
-    if (!client) return; // is orphan, do nothing.
+    if (!client) return;
     for (const i of client.my_events) {
       relay.send(JSON.stringify(["EVENT", i]));
     }
