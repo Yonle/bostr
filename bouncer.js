@@ -5,7 +5,7 @@ const { verifySignature, validateEvent, nip19 } = require("nostr-tools");
 const auth = require("./auth.js");
 const nip42 = require("./nip42.js");
 
-let { relays, approved_publishers, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, max_eose_score, cache_relays, broadcast_ratelimit, upstream_ratelimit_expiration, max_client_subs } = require("./config");
+let { relays, approved_publishers, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, max_eose_score, broadcast_ratelimit, upstream_ratelimit_expiration, max_client_subs } = require("./config");
 
 const csess = new Map();
 
@@ -15,8 +15,6 @@ approved_publishers = approved_publishers?.map(i => i.startsWith("npub") ? nip19
 
 // CL MaxEoseScore: Set <max_eose_score> as 0 if configured relays is under of the expected number from <max_eose_score>
 if (relays.length < max_eose_score) max_eose_score = 0;
-
-cache_relays = cache_relays?.map(i => i.endsWith("/") ? i : i + "/");
 
 // CL - User socket
 module.exports = (ws, req, onClose) => {
@@ -81,8 +79,7 @@ module.exports = (ws, req, onClose) => {
         lastEvent = Date.now();
 
         ws.my_events.add(data[1]);
-        direct_bc(data, ws.id);
-        cache_bc(data, ws.id);
+        bc(data, ws.id);
         ws.send(JSON.stringify(["OK", data[1]?.id, true, ""]));
         break;
       case "REQ": {
@@ -120,8 +117,7 @@ module.exports = (ws, req, onClose) => {
         ws.subalias.delete(faked);
 
         data[1] = faked;
-        cache_bc(data, ws.id);
-        direct_bc(data, ws.id);
+        bc(data, ws.id);
         ws.send(JSON.stringify(["CLOSED", origID, ""]));
         break;
       case "AUTH":
@@ -163,33 +159,18 @@ module.exports = (ws, req, onClose) => {
 
 // WS - New session for client $id
 function newsess(id) {
-  cache_relays?.forEach(_ => newConn(_, id));
   relays.forEach(_ => newConn(_, id));
 }
 
 // WS - Broadcast message to every existing sockets
-function direct_bc(msg, id) {
+function bc(msg, id) {
   for (const sock of csess.get(id).relays) {
-    if (cache_relays?.includes(sock.url)) continue;
     if (sock.readyState !== 1) continue;
 
     // skip the ratelimit after <config.upstream_ratelimit_expiration>
     if ((upstream_ratelimit_expiration) > (Date.now() - sock.ratelimit)) continue;
     sock.send(JSON.stringify(msg));
   }
-}
-
-function cache_bc(msg, id) {
-  for (const sock of csess.get(id).relays) {
-    if (!cache_relays?.includes(sock.url)) continue;
-    if (sock.readyState !== 1) continue;
-    sock.send(JSON.stringify(msg));
-  }
-}
-
-function bc(msg, id) {
-  if (!cache_relays?.length) direct_bc(msg, id);
-  else cache_bc(msg, id);
 }
 
 // WS - Terminate all existing sockets that were for <id>
@@ -244,7 +225,7 @@ function newConn(addr, id, reconn_t = 0) {
         if (data.length < 3 || typeof(data[1]) !== "string" || typeof(data[2]) !== "object") return;
         if (!client.subalias.has(data[1])) return;
         data[1] = client.subalias.get(data[1]);
-        if (client.pause_subs.has(data[1]) && !cache_relays?.includes(relay.url)) return;
+        if (client.pause_subs.has(data[1])) return;
 
         // if filter.since > receivedEvent.created_at, skip
         // if receivedEvent.created_at > filter.until, skip
@@ -264,9 +245,6 @@ function newConn(addr, id, reconn_t = 0) {
           client.send(JSON.stringify(data));
         }
 
-        // send into cache relays.
-        if (!cache_relays?.includes(relay.url)) cache_bc(["EVENT", data[2]], id);
-
         // Now count for REQ limit requested by client.
         // If it's at the limit, Send EOSE to client and delete pendingEOSE of subID
 
@@ -275,7 +253,7 @@ function newConn(addr, id, reconn_t = 0) {
         if (client.events.get(data[1]).size >= (cFilter?.ids?.length || cFilter?.limit)) {
           // Once reached to <filter.limit>, send EOSE to client.
           client.send(JSON.stringify(["EOSE", data[1]]));
-          if (pause_on_limit || cache_relays?.includes(relay.url)) {
+          if (pause_on_limit) {
             client.pause_subs.add(data[1]);
           } else {
             client.pendingEOSE.delete(data[1]);
@@ -288,25 +266,16 @@ function newConn(addr, id, reconn_t = 0) {
         data[1] = client.subalias.get(data[1]);
         if (!client.pendingEOSE.has(data[1])) return;
         client.pendingEOSE.set(data[1], client.pendingEOSE.get(data[1]) + 1);
-        if (log_about_relays) console.log(process.pid, "---", `[${id}]`, `got EOSE from ${relay.url} for ${data[1]}. There are ${client.pendingEOSE.get(data[1])} EOSE received out of ${Array.from(socks).filter(sock => sock.id === id).length} connected relays.`);
+        if (log_about_relays) console.log(process.pid, "---", `[${id}]`, `got EOSE from ${relay.url} for ${data[1]}. There are ${client.pendingEOSE.get(data[1])} EOSE received out of ${client.relays.size} connected relays.`);
 
-        if (!cache_relays?.includes(relay.url)) {
-          if (wait_eose && ((client.pendingEOSE.get(data[1]) < max_eose_score) || (client.pendingEOSE.get(data[1]) < Array.from(socks).filter(sock => sock.id === id).length))) return;
-          if (client.pause_subs.has(data[1])) return client.pause_subs.delete(data[1]);
+        if (wait_eose && ((client.pendingEOSE.get(data[1]) < max_eose_score) || (client.pendingEOSE.get(data[1]) < client.relays.size))) return;
+        client.pendingEOSE.delete(data[1]);
+
+        if (client.pause_subs.has(data[1])) {
+          client.pause_subs.delete(data[1]);
         } else {
-          if (client.pendingEOSE.get(data[1]) < Array.from(socks).filter(sock => (sock.id === id) && cache_relays?.includes(sock.url)).length) return;
-          // get the filter
-          const filter = client.subs.get(data[1]);
-          if (client.pause_subs.has(data[1])) {
-            client.pause_subs.delete(data[1]);
-            client.pendingEOSE.delete(data[1]);
-          }
-
-          // now req to the direct connection, with the recent one please.
-          return direct_bc(["REQ", data[1], ...filter], id);
+          client.send(JSON.stringify(data));
         }
-
-        client.send(JSON.stringify(data));
         break;
       case "AUTH":
         if (!private_keys || typeof(data[1]) !== "string" || !client.pubkey) return;
