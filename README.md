@@ -20,7 +20,7 @@ This project solve the problem by **reducing** the number of connected relays, a
 - A fast internet connection
 
 ```
-git clone https://github.com/Yonle/bostr
+git clone -b stable https://github.com/Yonle/bostr
 cd bostr
 npm i
 ```
