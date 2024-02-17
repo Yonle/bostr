@@ -144,7 +144,7 @@ module.exports = (ws, req, onClose) => {
     }
 
     for (const sock of ws.relays) {
-      sock.close();
+      sock.terminate();
     }
   });
 
@@ -169,7 +169,7 @@ function bc(msg, ws) {
 
 // WS - Sessions
 function newConn(addr, client, reconn_t = 0) {
-  if (!client) return;
+  if (client.readyState !== 1) return;
   const relay = new WebSocket(addr, {
     headers: {
       "User-Agent": `Bostr (v${version}); The nostr relay bouncer; https://github.com/Yonle/bostr`
@@ -180,7 +180,7 @@ function newConn(addr, client, reconn_t = 0) {
 
   relay.ratelimit = 0;
   relay.on('open', _ => {
-    if (!client) return relay.close();
+    if (client.readyState !== 1) return relay.terminate();
     reconn_t = 0;
     if (log_about_relays) console.log(process.pid, "---", client.ip, `${relay.url} is connected`);
 
@@ -194,7 +194,7 @@ function newConn(addr, client, reconn_t = 0) {
   });
 
   relay.on('message', data => {
-    if (!client) return relay.close();
+    if (client.readyState !== 1) return relay.terminate();
     try {
       data = JSON.parse(data);
     } catch (error) {
@@ -208,7 +208,7 @@ function newConn(addr, client, reconn_t = 0) {
         data[1] = client.subalias.get(data[1]);
         if (client.pause_subs.has(data[1])) return;
 
-        const cFilter = client.subs.get(data[1])[0];
+        const cFilter = {...client.subs.get(data[1])};
         const NotInSearchQuery = "search" in cFilter && !data[2]?.content?.toLowerCase().includes(cFilter.search.toLowerCase());
 
         if (NotInSearchQuery) return;
@@ -274,7 +274,7 @@ function newConn(addr, client, reconn_t = 0) {
   });
 
   relay.on('close', _ => {
-    if (!client) return;
+    if (client.readyState !== 1) return;
     client.relays.delete(relay); // Remove this socket session from <client.relays> list
     if (log_about_relays) console.log(process.pid, "-!-", client.ip, "Disconnected from", relay.url);
     reconn_t += reconnect_time || 5000
@@ -286,7 +286,7 @@ function newConn(addr, client, reconn_t = 0) {
   });
 
   relay.on('unexpected-response', (req, res) => {
-    if (!client) return;
+    if (client.readyState !== 1) return;
     client.relays.delete(relay);
     if (res.statusCode >= 500) return relay.emit("close", null);
     delete relays[relays.indexOf(addr)];
