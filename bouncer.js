@@ -167,6 +167,26 @@ function bc(msg, ws) {
   }
 }
 
+function validateFilter(event, filters) {
+  for (const filter of filters) {
+    if (filter === {}) return true;
+    // if filter.since > receivedEvent.created_at, skip
+    // if receivedEvent.created_at > filter.until, skip
+    if (Array.isArray(filter?.ids) && !filter.ids.includes(event.id)) continue;
+    if (Array.isArray(filter?.authors) && !filter.authors.includes(event.pubkey)) continue;
+    if (Array.isArray(filter?.kinds) && !filter.kinds.includes(event.kind)) continue;
+    if (filter?.since > event.created_at) continue;
+    if (event.created_at > filter?.until) continue;
+
+    const NotInSearchQuery = "search" in filter && !event?.content?.toLowerCase().includes(filter.search.toLowerCase());
+    if (NotInSearchQuery) continue;
+
+    return true;
+  }
+
+  return false;
+}
+
 // WS - Sessions
 function newConn(addr, client, reconn_t = 0) {
   if (client.readyState !== 1) return;
@@ -208,17 +228,8 @@ function newConn(addr, client, reconn_t = 0) {
         data[1] = client.subalias.get(data[1]);
         if (client.pause_subs.has(data[1])) return;
 
-        const cFilter = {...client.subs.get(data[1])};
-        // if filter.since > receivedEvent.created_at, skip
-        // if receivedEvent.created_at > filter.until, skip
-        if (Array.isArray(cFilter?.ids) && !cFilter.ids.includes(data[2].id)) return;
-        if (Array.isArray(cFilter?.authors) && !cFilter.authors.includes(data[2].pubkey)) return;
-        if (Array.isArray(cFilter?.kinds) && !cFilter.kinds.includes(data[2].kind)) return;
-        if (cFilter?.since > data[2].created_at) return;
-        if (data[2].created_at > cFilter?.until) return;
-
-        const NotInSearchQuery = "search" in cFilter && !data[2]?.content?.toLowerCase().includes(cFilter.search.toLowerCase());
-        if (NotInSearchQuery) return;
+        const filters = client.subs.get(data[1]);
+        if (!validateFilter(data[2], filters)) return;
         if (client.events.get(data[1]).has(data[2]?.id)) return; // No need to transmit once it has been transmitted before.
 
         if (!client.pause_subs.has(data[1])) {
@@ -230,14 +241,18 @@ function newConn(addr, client, reconn_t = 0) {
         // If it's at the limit, Send EOSE to client and delete pendingEOSE of subID
 
         // Skip if EOSE has been omitted
-        if (!client.pendingEOSE.has(data[1]) || !(cFilter?.limit || cFilter?.ids?.length) || client.pause_subs.has(data[1])) return;
-        if (client.events.get(data[1]).size >= (cFilter?.ids?.length || cFilter?.limit)) {
-          // Once reached to <filter.limit>, send EOSE to client.
-          client.send(JSON.stringify(["EOSE", data[1]]));
-          if (pause_on_limit) {
-            client.pause_subs.add(data[1]);
-          } else {
-            client.pendingEOSE.delete(data[1]);
+        if (!client.pendingEOSE.has(data[1])) return;
+        for (const filter of filters) {
+          if (!(filter?.limit || filter?.ids?.length) || client.pause_subs.has(data[1])) return;
+          if (client.events.get(data[1]).size >= (filter?.ids?.length || filter?.limit)) {
+            // Once reached to <filter.limit>, send EOSE to client.
+            client.send(JSON.stringify(["EOSE", data[1]]));
+            if (pause_on_limit) {
+              client.pause_subs.add(data[1]);
+            } else {
+              client.pendingEOSE.delete(data[1]);
+            }
+            break;
           }
         }
         break;
