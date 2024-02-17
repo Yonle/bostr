@@ -1,7 +1,7 @@
 "use strict";
 const { version } = require("./package.json");
 const WebSocket = require("ws");
-const { verifySignature, validateEvent, nip19, matchFilters } = require("nostr-tools");
+const { verifySignature, validateEvent, nip19, matchFilters, mergeFilters, getFilterLimit } = require("nostr-tools");
 const auth = require("./auth.js");
 const nip42 = require("./nip42.js");
 
@@ -209,6 +209,7 @@ function newConn(addr, client, reconn_t = 0) {
         if (client.pause_subs.has(data[1])) return;
 
         const filters = client.subs.get(data[1]);
+        const filter = mergeFilters(filters);
         if (!matchFilters(filters, data[2])) return;
         if (client.events.get(data[1]).has(data[2]?.id)) return; // No need to transmit once it has been transmitted before.
 
@@ -221,18 +222,16 @@ function newConn(addr, client, reconn_t = 0) {
         // If it's at the limit, Send EOSE to client and delete pendingEOSE of subID
 
         // Skip if EOSE has been omitted
-        if (!client.pendingEOSE.has(data[1])) return;
-        for (const filter of filters) {
-          if (!(filter?.limit || filter?.ids?.length) || client.pause_subs.has(data[1])) return;
-          if (client.events.get(data[1]).size >= (filter?.ids?.length || filter?.limit)) {
-            // Once reached to <filter.limit>, send EOSE to client.
-            client.send(JSON.stringify(["EOSE", data[1]]));
-            if (pause_on_limit) {
-              client.pause_subs.add(data[1]);
-            } else {
-              client.pendingEOSE.delete(data[1]);
-            }
-            break;
+        if (!client.pendingEOSE.has(data[1]) || client.pause_subs.has(data[1])) return;
+        const limit = getFilterLimit(filter);
+        if (limit === Infinity) return;
+        if (client.events.get(data[1]).size >= limit) {
+          // Once reached to <filter.limit>, send EOSE to client.
+          client.send(JSON.stringify(["EOSE", data[1]]));
+          if (pause_on_limit) {
+            client.pause_subs.add(data[1]);
+          } else {
+            client.pendingEOSE.delete(data[1]);
           }
         }
         break;
