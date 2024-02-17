@@ -1,7 +1,7 @@
 "use strict";
 const { version } = require("./package.json");
 const WebSocket = require("ws");
-const { verifySignature, validateEvent, nip19 } = require("nostr-tools");
+const { verifySignature, validateEvent, nip19, matchFilters } = require("nostr-tools");
 const auth = require("./auth.js");
 const nip42 = require("./nip42.js");
 
@@ -167,26 +167,6 @@ function bc(msg, ws) {
   }
 }
 
-function validateFilter(event, filters) {
-  for (const filter of filters) {
-    if (filter === {}) return true;
-    // if filter.since > receivedEvent.created_at, skip
-    // if receivedEvent.created_at > filter.until, skip
-    if (Array.isArray(filter?.ids) && !filter.ids.includes(event.id)) continue;
-    if (Array.isArray(filter?.authors) && !filter.authors.includes(event.pubkey)) continue;
-    if (Array.isArray(filter?.kinds) && !filter.kinds.includes(event.kind)) continue;
-    if (filter?.since > event.created_at) continue;
-    if (event.created_at > filter?.until) continue;
-
-    const NotInSearchQuery = "search" in filter && !event?.content?.toLowerCase().includes(filter.search.toLowerCase());
-    if (NotInSearchQuery) continue;
-
-    return true;
-  }
-
-  return false;
-}
-
 // WS - Sessions
 function newConn(addr, client, reconn_t = 0) {
   if (client.readyState !== 1) return;
@@ -229,7 +209,7 @@ function newConn(addr, client, reconn_t = 0) {
         if (client.pause_subs.has(data[1])) return;
 
         const filters = client.subs.get(data[1]);
-        if (!validateFilter(data[2], filters)) return;
+        if (!matchFilters(filters, data[2])) return;
         if (client.events.get(data[1]).has(data[2]?.id)) return; // No need to transmit once it has been transmitted before.
 
         if (!client.pause_subs.has(data[1])) {
