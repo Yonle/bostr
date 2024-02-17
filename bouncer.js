@@ -210,7 +210,8 @@ function newConn(addr, client, reconn_t = 0) {
 
         const filters = client.subs.get(data[1]);
         const filter = mergeFilters(filters);
-        if (!matchFilters(filters, data[2])) return;
+        const NotInSearchQuery = "search" in filter && !data[2]?.content?.toLowerCase().includes(filter.search.toLowerCase());
+        if (!matchFilters(filters, data[2]) || NotInSearchQuery) return;
         if (client.events.get(data[1]).has(data[2]?.id)) return; // No need to transmit once it has been transmitted before.
 
         if (!client.pause_subs.has(data[1])) {
