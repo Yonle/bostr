@@ -1,14 +1,9 @@
-const { validateEvent, verifySignature } = require("nostr-tools");
+const { verifyEvent } = require("nostr-tools");
 const { authorized_keys, private_keys } = require("./config");
 
 module.exports = (authKey, data, ws, req) => {
-  if (!validateEvent(data)) {
+  if (!verifyEvent(data)) {
     ws.send(JSON.stringify(["NOTICE", "error: invalid challenge response."]));
-    return false;
-  }
-
-  if (!verifySignature(data)) {
-    ws.send(JSON.stringify(["OK", data.id, false, "signature verification failed."]));
     return false;
   }
 
@@ -23,6 +18,7 @@ module.exports = (authKey, data, ws, req) => {
   }
 
   const tags = new Map(data.tags);
+
   if (!tags.get("relay").includes(req.headers.host)) {
     ws.send(JSON.stringify(["OK", data.id, false, "unmatched relay url."]));
     return false;

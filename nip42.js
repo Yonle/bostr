@@ -1,11 +1,10 @@
-const { getEventHash, getSignature, nip19 } = require("nostr-tools");
+const { finalizeEvent, nip19 } = require("nostr-tools");
 
 module.exports = (relay, pubkey, privkey, challenge) => {
   if (!privkey) return;
   if (privkey.startsWith("nsec")) privkey = nip19.decode(privkey).data;
 
-  let signed_challenge = {
-    pubkey,
+  let signed_challenge = finalizeEvent({
     created_at: Math.floor(Date.now() / 1000),
     kind: 22242,
     tags: [
@@ -13,9 +12,7 @@ module.exports = (relay, pubkey, privkey, challenge) => {
       ["challenge", challenge]
     ],
     content: ""
-  }
+  }, privkey);
 
-  signed_challenge.id = getEventHash(signed_challenge);
-  signed_challenge.sig = getSignature(signed_challenge, privkey);
   relay.send(JSON.stringify(["AUTH", signed_challenge]));
 }
