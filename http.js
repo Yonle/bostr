@@ -68,11 +68,11 @@ server.on('request', (req, res) => {
     if (config?.authorized_keys?.length) res.write("\nNOTE: This relay has configured for personal use only. Only authorized users could use this bostr relay.\n");
     res.write(`\nConnect to this bouncer with nostr client: ${req.headers["x-forwarded-proto"]?.replace(/http/i, "ws") || (server.isStandaloneHTTPS ? "wss" : "ws")}://${req.headers.host}${req.url}`);
     res.write(`\n\n- To make this bouncer only send you specific event kinds, Connect:`);
-    res.write(`\n  ${req.headers["x-forwarded-proto"]?.replace(/http/i, "ws") || (server.isStandaloneHTTPS ? "wss" : "ws")}://${req.headers.host}${req.url}?accept=0,1,2,3,4,5,6,7,8,16,1984,1985,13194,21000,23194,23195,30315`);
-    res.write(`\n  (Will only send events with kinds 0, 1, 2, 3, 4, 5, 6, 7, 8, 16, 1984, 1985, 13194, 21000, 23194, 23195, and 30315)`);
+    res.write(`\n  ${req.headers["x-forwarded-proto"]?.replace(/http/i, "ws") || (server.isStandaloneHTTPS ? "wss" : "ws")}://${req.headers.host}${req.url}?accept=0,1`);
+    res.write(`\n  (Will only send events with kinds 0, and 1)`);
     res.write(`\n- To make this bouncer not sending some specific kind of events, Connect:`);
-    res.write(`\n  ${req.headers["x-forwarded-proto"]?.replace(/http/i, "ws") || (server.isStandaloneHTTPS ? "wss" : "ws")}://${req.headers.host}${req.url}?reject=10000,10002`);
-    res.write(`\n  (Will not send events with kind 10000, and 10002)`);
+    res.write(`\n  ${req.headers["x-forwarded-proto"]?.replace(/http/i, "ws") || (server.isStandaloneHTTPS ? "wss" : "ws")}://${req.headers.host}${req.url}?reject=3,6,7`);
+    res.write(`\n  (Will not send events with kind 3, 6, and 7)`);
     res.end(`\n\n---\nPowered by Bostr (${version}) - Open source Nostr bouncer\nhttps://github.com/Yonle/bostr`);
   } else if (req.url.includes("favicon") && favicon) {
     res.writeHead(200, { "Content-Type": "image/" + config.favicon?.split(".").pop() });
