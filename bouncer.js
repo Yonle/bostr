@@ -79,7 +79,7 @@ module.exports = (ws, req, onClose) => {
         }
 
         if (!ws.relays.size && !sessStarted) {
-          console.log(process.pid, `>>>`, `${ws.ip} executed ${data[1]} command for the first. Initializing session`);
+          console.log(process.pid, `>>>`, `${ws.ip} executed ${data[0]} command for the first. Initializing session`);
           newsess(ws);
           sessStarted = true;
         }
@@ -116,7 +116,7 @@ module.exports = (ws, req, onClose) => {
         }
 
         if (!ws.relays.size && !sessStarted) {
-          console.log(process.pid, `>>>`, `${ws.ip} executed ${data[1]} command for the first. Initializing session`);
+          console.log(process.pid, `>>>`, `${ws.ip} executed ${data[0]} command for the first. Initializing session`);
           newsess(ws);
           sessStarted = true;
         }
