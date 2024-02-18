@@ -78,15 +78,15 @@ module.exports = (ws, req, onClose) => {
           return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rate-limited: request too fast."]));
         }
 
+        lastEvent = Date.now();
+        ws.my_events.add(data[1]);
+
         if (!ws.relays.size && !sessStarted) {
           console.log(process.pid, `>>>`, `${ws.ip} executed ${data[0]} command for the first. Initializing session`);
           newsess(ws);
           sessStarted = true;
         }
 
-        lastEvent = Date.now();
-
-        ws.my_events.add(data[1]);
         bc(data, ws);
         ws.send(JSON.stringify(["OK", data[1]?.id, true, ""]));
         break;
