@@ -89,6 +89,8 @@ server.on('upgrade', (req, sock, head) => {
   }
 
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || sock.address()?.address;
+
+  if (config.blocked_hosts && config.blocked_hosts.includes(ip)) return sock.destroy();
   const lv = lastConn.get(ip) // last visit
   if (config.incomming_ratelimit && (config.incomming_ratelimit > (Date.now() - lv))) {
     log(`Rejected connection from ${ip} as the last connection was ${Date.now() - lv} ms ago.`);

@@ -89,6 +89,15 @@ module.exports = {
     // ....
   ],
 
+  // Block incomming websocket connections from the following hosts.
+  blocked_hosts: [
+    // "127.0.0.1",
+    // "127.0.0.2",
+    // "::1",
+    // "::2",
+    // ....
+  ],
+
   // Used for accessing NIP-42 protected events from certain relays.
   // It could be your key. Leaving this empty completely disables NIP-42 function.
   //
