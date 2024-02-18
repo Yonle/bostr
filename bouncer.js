@@ -2,7 +2,7 @@
 const { version } = require("./package.json");
 const WebSocket = require("ws");
 const querystring = require("querystring");
-const { verifyEvent, nip19, matchFilters, mergeFilters, getFilterLimit } = require("nostr-tools");
+const { validateEvent, nip19, matchFilters, mergeFilters, getFilterLimit } = require("nostr-tools");
 const auth = require("./auth.js");
 const nip42 = require("./nip42.js");
 
@@ -64,7 +64,7 @@ module.exports = (ws, req, onClose) => {
     switch (data[0]) {
       case "EVENT":
         if (!authorized) return;
-        if (!verifyEvent(data[1])) return ws.send(JSON.stringify(["NOTICE", "error: invalid event"]));
+        if (!validateEvent(data[1])) return ws.send(JSON.stringify(["NOTICE", "error: invalid event"]));
         if (data[1].kind == 22242) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rejected: kind 22242"]));
 
         if (

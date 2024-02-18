@@ -1,8 +1,8 @@
-const { verifyEvent } = require("nostr-tools");
+const { validateEvent, verifyEvent } = require("nostr-tools");
 const { authorized_keys, private_keys } = require("./config");
 
 module.exports = (authKey, data, ws, req) => {
-  if (!verifyEvent(data)) {
+  if (!validateEvent(data) || !verifyEvent(data)) {
     ws.send(JSON.stringify(["NOTICE", "error: invalid challenge response."]));
     return false;
   }
