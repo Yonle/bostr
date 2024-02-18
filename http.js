@@ -74,7 +74,7 @@ server.on('request', (req, res) => {
     res.write(`\n  ${req.headers["x-forwarded-proto"]?.replace(/http/i, "ws") || (server.isStandaloneHTTPS ? "wss" : "ws")}://${req.headers.host}${req.url}?reject=10000,10002`);
     res.write(`\n  (Will not send events with kind 10000, and 10002)`);
     res.end(`\n\n---\nPowered by Bostr (${version}) - Open source Nostr bouncer\nhttps://github.com/Yonle/bostr`);
-  } else if (req.url.startsWith("/favicon") && favicon) {
+  } else if (req.url.includes("favicon") && favicon) {
     res.writeHead(200, { "Content-Type": "image/" + config.favicon?.split(".").pop() });
     res.end(favicon);
   } else {
