@@ -96,12 +96,16 @@ module.exports = (ws, req, onClose) => {
         let filter = mergeFilters(...filters);
 
         for (const fn in filters) {
-          if (!Array.isArray(filters[fn].kinds)) continue;
-          filters[fn].kinds = filters[fn].kinds?.filter(kind => {
-            if (ws.rejectKinds && ws.rejectKinds.includes(kind)) return false;
-            if (ws.acceptKinds && !ws.acceptKinds.includes(kind)) return true;
-            return true;
-          });
+          if (!Array.isArray(filters[fn].kinds)) {
+            filters[fn].kinds = ws.acceptKinds;
+            continue;
+          } else {
+            filters[fn].kinds = filters[fn].kinds?.filter(kind => {
+              if (ws.rejectKinds && ws.rejectKinds.includes(kind)) return false;
+              if (ws.acceptKinds && !ws.acceptKinds.includes(kind)) return true;
+              return true;
+            });
+          }
         }
         ws.subs.set(origID, filters);
         ws.events.set(origID, new Set());
@@ -224,6 +228,8 @@ function newConn(addr, client, reconn_t = 0) {
         if (!client.subalias.has(data[1])) return;
         data[1] = client.subalias.get(data[1]);
         if (client.pause_subs.has(data[1])) return;
+
+        if (client.rejectKinds && client.rejectKinds.includes(data[2]?.id)) return;
 
         const filters = client.subs.get(data[1]);
         if (!matchFilters(filters, data[2])) return;
