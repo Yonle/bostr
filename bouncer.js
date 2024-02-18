@@ -31,6 +31,7 @@ module.exports = (ws, req, onClose) => {
   ws.reconnectTimeout = new Set(); // relays timeout() before reconnection. Only use after client disconnected.
   ws.subalias = new Map();
   ws.fakesubalias = new Map();
+  ws.mergedFilters = new Map();
   ws.pubkey = null;
   ws.rejectKinds = query.reject?.split(",").map(_ => parseInt(_));
   ws.acceptKinds = query.accept?.split(",").map(_ => parseInt(_));
@@ -92,6 +93,7 @@ module.exports = (ws, req, onClose) => {
         const origID = data[1];
         const faked = Date.now() + Math.random().toString(36);
         let filters = data.slice(2);
+        let filter = mergeFilters(...filters);
 
         for (const fn in filters) {
           if (!Array.isArray(filters[fn].kinds)) continue;
@@ -106,9 +108,10 @@ module.exports = (ws, req, onClose) => {
         ws.pause_subs.delete(origID);
         ws.subalias.set(faked, origID);
         ws.fakesubalias.set(origID, faked);
+        ws.mergedFilters.set(origID, filter);
         data[1] = faked;
         bc(data, ws);
-        if (getFilterLimit(mergeFilters(...filters)) < 1) return ws.send(JSON.stringify(["EOSE", origID]));
+        if (filter.limit < 1) return ws.send(JSON.stringify(["EOSE", origID]));
         ws.pendingEOSE.set(origID, 0);
         break;
       }
@@ -124,6 +127,7 @@ module.exports = (ws, req, onClose) => {
         ws.pause_subs.delete(origID);
         ws.fakesubalias.delete(origID);
         ws.subalias.delete(faked);
+        ws.mergedFilters.delete(origID);
 
         data[1] = faked;
         bc(data, ws);
@@ -225,7 +229,7 @@ function newConn(addr, client, reconn_t = 0) {
         if (client.rejectKinds && client.rejectKinds.includes(data[2]?.kind)) return;
 
         const filters = client.subs.get(data[1]);
-        const filter = mergeFilters(...filters);
+        const filter = client.mergedFilters.get(data[1]);
         const NotInSearchQuery = "search" in filter && !data[2]?.content?.toLowerCase().includes(filter.search.toLowerCase());
         if (!matchFilters(filters, data[2]) || NotInSearchQuery) return;
         if (client.events.get(data[1]).has(data[2]?.id)) return; // No need to transmit once it has been transmitted before.
