@@ -327,7 +327,7 @@ function newConn(addr, client, reconn_t = 0) {
     if (client.readyState !== 1) return;
     client.relays.delete(relay);
     if (res.statusCode >= 500) return relay.emit("close", null);
-    delete relays[relays.indexOf(addr)];
+    relays = relays.filter(_ => !relay.url.startsWith(_));
     console.log(process.pid, "-!-", `${relay.url} give status code ${res.statusCode}. Not (re)connect with new session again.`);
   });
 
