@@ -1,6 +1,7 @@
 "use strict";
 const { version } = require("./package.json");
 const WebSocket = require("ws");
+const querystring = require("querystring");
 const { verifyEvent, nip19, matchFilters, mergeFilters, getFilterLimit } = require("nostr-tools");
 const auth = require("./auth.js");
 const nip42 = require("./nip42.js");
@@ -16,6 +17,7 @@ if (relays.length < max_eose_score) max_eose_score = 0;
 
 // CL - User socket
 module.exports = (ws, req, onClose) => {
+  let query = querystring.parse(req.url.slice(2));
   let authKey = null;
   let authorized = true;
   let lastEvent = Date.now();
@@ -30,6 +32,8 @@ module.exports = (ws, req, onClose) => {
   ws.subalias = new Map();
   ws.fakesubalias = new Map();
   ws.pubkey = null;
+  ws.rejectKinds = query.reject?.split(",").map(_ => parseInt(_));
+  ws.acceptKinds = query.accept?.split(",").map(_ => parseInt(_));
 
   if (authorized_keys?.length) {
     authKey = Date.now() + Math.random().toString(36);
@@ -87,15 +91,24 @@ module.exports = (ws, req, onClose) => {
         if (ws.subs.has(data[1])) return ws.send(JSON.stringify(["CLOSED", data[1], "duplicate: subscription already opened"]));
         const origID = data[1];
         const faked = Date.now() + Math.random().toString(36);
-        ws.subs.set(origID, data.slice(2));
+        let filters = data.slice(2);
+
+        for (const fn in filters) {
+          if (!Array.isArray(filters[fn].kinds)) continue;
+          filters[fn].kinds = filters[fn].kinds?.filter(kind => {
+            if (ws.rejectKinds && ws.rejectKinds.includes(kind)) return false;
+            if (ws.acceptKinds && !ws.acceptKinds.includes(kind)) return true;
+            return true;
+          });
+        }
+        ws.subs.set(origID, filters);
         ws.events.set(origID, new Set());
         ws.pause_subs.delete(origID);
         ws.subalias.set(faked, origID);
         ws.fakesubalias.set(origID, faked);
-
         data[1] = faked;
         bc(data, ws);
-        if (data[2]?.limit < 1) return ws.send(JSON.stringify(["EOSE", origID]));
+        if (getFilterLimit(mergeFilters(...filters)) < 1) return ws.send(JSON.stringify(["EOSE", origID]));
         ws.pendingEOSE.set(origID, 0);
         break;
       }
@@ -208,8 +221,11 @@ function newConn(addr, client, reconn_t = 0) {
         data[1] = client.subalias.get(data[1]);
         if (client.pause_subs.has(data[1])) return;
 
+        if (client.acceptKinds && !client.acceptKinds.includes(data[2]?.kind)) return;
+        if (client.rejectKinds && client.rejectKinds.includes(data[2]?.kind)) return;
+
         const filters = client.subs.get(data[1]);
-        const filter = mergeFilters(filters);
+        const filter = mergeFilters(...filters);
         const NotInSearchQuery = "search" in filter && !data[2]?.content?.toLowerCase().includes(filter.search.toLowerCase());
         if (!matchFilters(filters, data[2]) || NotInSearchQuery) return;
         if (client.events.get(data[1]).has(data[2]?.id)) return; // No need to transmit once it has been transmitted before.
