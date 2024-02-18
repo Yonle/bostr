@@ -20,6 +20,7 @@ module.exports = (ws, req, onClose) => {
   let query = querystring.parse(req.url.slice(2));
   let authKey = null;
   let authorized = true;
+  let sessStarted = false;
   let lastEvent = Date.now();
   ws.ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address;
   ws.relays = new Set(); // Set() of connected relays.
@@ -77,6 +78,11 @@ module.exports = (ws, req, onClose) => {
           return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rate-limited: request too fast."]));
         }
 
+        if (!ws.relays.size && !sessStarted) {
+          newsess(ws);
+          sessStarted = true;
+        }
+
         lastEvent = Date.now();
 
         ws.my_events.add(data[1]);
@@ -107,6 +113,12 @@ module.exports = (ws, req, onClose) => {
             });
           }
         }
+
+        if (!ws.relays.size && !sessStarted) {
+          newsess(ws);
+          sessStarted = true;
+        }
+
         ws.subs.set(origID, filters);
         ws.events.set(origID, new Set());
         ws.pause_subs.delete(origID);
@@ -142,7 +154,6 @@ module.exports = (ws, req, onClose) => {
           ws.pubkey = data[1].pubkey;
           console.log(process.pid, "---", ws.ip, "successfully authorized as", ws.pubkey, private_keys[ws.pubkey] ? "(admin)" : "(user)");
           if (authorized) return;
-          newsess(ws);
           authorized = true;
           lastEvent = Date.now();
         }
@@ -168,8 +179,6 @@ module.exports = (ws, req, onClose) => {
       sock.terminate();
     }
   });
-
-  if (authorized) newsess(ws);
 }
 
 // WS - New session for client $id
