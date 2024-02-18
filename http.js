@@ -67,7 +67,7 @@ server.on('request', (req, res) => {
     res.write(`\nI have ${wss.clients.size} clients currently connected to this bouncer${(process.env.CLUSTERS || config.clusters) > 1 ? " on this cluster" : ""}.\n`);
     if (config?.authorized_keys?.length) res.write("\nNOTE: This relay has configured for personal use only. Only authorized users could use this bostr relay.\n");
     res.write(`\nConnect to this bouncer with nostr client: ${req.headers["x-forwarded-proto"]?.replace(/http/i, "ws") || (server.isStandaloneHTTPS ? "wss" : "ws")}://${req.headers.host}${req.url}`);
-    res.write(`\n\n- To make this bouncer only send specific kind of event, Connect:`);
+    res.write(`\n\n- To make this bouncer only send specific kind of events, Connect:`);
     res.write(`\n  ${req.headers["x-forwarded-proto"]?.replace(/http/i, "ws") || (server.isStandaloneHTTPS ? "wss" : "ws")}://${req.headers.host}${req.url}?accept=0,1`);
     res.write(`\n  (Will only send events with kind 0, and 1)`);
     res.write(`\n- To make this bouncer not sending specific kind of events, Connect:`);
