@@ -102,7 +102,7 @@ module.exports = (ws, req, onClose) => {
           } else {
             filters[fn].kinds = filters[fn].kinds?.filter(kind => {
               if (ws.rejectKinds && ws.rejectKinds.includes(kind)) return false;
-              if (ws.acceptKinds && !ws.acceptKinds.includes(kind)) return true;
+              if (ws.acceptKinds && !ws.acceptKinds.includes(kind)) return false;
               return true;
             });
           }
