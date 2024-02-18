@@ -57,7 +57,7 @@ docker run --rm --name bostr -p 8080:8080 -v ./config.js:/usr/src/app/config.js 
 
 ## License
 
-Copyright 2023 Yonle <yonle@lecturify.net>
+Copyright 2024 Yonle <yonle@lecturify.net>
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
