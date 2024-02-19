@@ -48,9 +48,9 @@ switch (argv[0]) {
     const unknown = currentConf.filter(i => !masterConf.includes(i))
     const missing = masterConf.filter(i => !currentConf.includes(i))
 
-    if (unknown.length) console.log("Unknown Field:\n- ", unknown.join("\n- "));
+    if (unknown.length) console.log("Unknown Field:\n- " + unknown.join("\n- "));
     if (missing.length) {
-      console.log("Missing Field:\n- ", missing.join("\n- "));
+      console.log("Missing Field:\n- " + missing.join("\n- "));
       console.log("\nPlease check your config and recheck again.");
       return process.exit(1);
     } else {
