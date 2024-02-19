@@ -43,6 +43,14 @@ After you finished editing the config file, You could start bostr with the follo
 bostr start bostr_config.js
 ```
 
+Or run in background with `tmux`:
+
+```
+tmux new -d "bostr start bostr_config.js"
+```
+
+When configuring reverse proxy, Ensure that `x-forwarded-proto` header was set as `https`.
+
 #### Source code
 
 ```
