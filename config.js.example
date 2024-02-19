@@ -37,10 +37,6 @@ module.exports = {
   // Setting as -1 will disable max subscription limit.
   max_client_subs: -1,
 
-  // Maximum amount of orphan sessions.
-  // Setting to 0 disables orphan session function.
-  max_orphan_sess: 7,
-
   // Wait for every connected relays send EOSE.
   // Could improve accuracy on received events.
   //
