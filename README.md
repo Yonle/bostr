@@ -16,8 +16,34 @@ This project solve the problem by **reducing** the number of connected relays, a
 
 ## Installation
 - [NodeJS](https://nodejs.org) (v16 or up)
-- libsqlite installed in your system
 - A fast internet connection
+
+#### Bostr CLI
+Install bostr via `npm`:
+```
+npm install -g bostr
+```
+
+or via git:
+
+```
+npm install -g https://github.com/Yonle/bostr.git
+```
+
+You will then need to make config with the following command:
+```
+bostr makeconf bostr_config.js
+```
+
+Edit `bostr_config.js` (Could be modified) with your file editor and fill some required fields accordingly to your needs. You could run it for everyone or only for yourself.
+
+### Running
+After you finished editing the config file, You could start bostr with the following command:
+```
+bostr start bostr_config.js
+```
+
+#### Source code
 
 ```
 git clone -b stable https://github.com/Yonle/bostr
@@ -25,9 +51,9 @@ cd bostr
 npm i
 ```
 
-Rename `config.js.example` as `config.js`, Start editing the file and fill some required fields accordingly to your needs. You could either run it for everyone or only for yourself.
+Rename `config.js.example` as `config.js`, Start editing the file and fill some required fields accordingly to your needs. You could run it for everyone or only for yourself.
 
-## Running
+### Running
 ```
 node index.js
 ```

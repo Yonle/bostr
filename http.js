@@ -1,7 +1,6 @@
 "use strict";
 const { version } = require("./package.json");
 const WebSocket = require("ws");
-const config = require("./config");
 const http = require("http");
 const http2 = require("http2");
 const fs = require("fs");
@@ -13,6 +12,9 @@ const log = _ => console.log(process.pid, curD(), "-", _);
 
 // Server
 let server = null;
+let config = require(process.env.BOSTR_CONFIG_PATH || "./config");
+
+config.server_meta.version = version;
 
 if (
   fs.existsSync(config.https?.privKey) &&
