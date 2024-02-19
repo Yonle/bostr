@@ -1,5 +1,5 @@
 const { validateEvent, verifyEvent } = require("nostr-tools");
-const { authorized_keys, private_keys } = require("./config");
+const { authorized_keys, private_keys } = require(process.env.BOSTR_CONFIG_PATH || "./config");
 
 module.exports = (authKey, data, ws, req) => {
   if (!validateEvent(data) || !verifyEvent(data)) {
