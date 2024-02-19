@@ -18,7 +18,7 @@ This project solve the problem by **reducing** the number of connected relays, a
 - [NodeJS](https://nodejs.org) (v16 or up)
 - A fast internet connection
 
-#### Bostr CLI
+### Bostr CLI
 Install bostr via `npm`:
 ```
 npm install -g bostr
@@ -37,7 +37,7 @@ bostr makeconf bostr_config.js
 
 Edit `bostr_config.js` (Could be modified) with your file editor and fill some required fields accordingly to your needs. You could run it for everyone or only for yourself.
 
-### Running
+#### Running
 After you finished editing the config file, You could start bostr with the following command:
 ```
 bostr start bostr_config.js
@@ -51,7 +51,7 @@ tmux new -d "bostr start bostr_config.js"
 
 When configuring reverse proxy, Ensure that `x-forwarded-proto` header was set as `https`.
 
-#### Source code
+### Source code
 
 ```
 git clone -b stable https://github.com/Yonle/bostr
@@ -61,7 +61,7 @@ npm i
 
 Rename `config.js.example` as `config.js`, Start editing the file and fill some required fields accordingly to your needs. You could run it for everyone or only for yourself.
 
-### Running
+#### Running
 ```
 node index.js
 ```
