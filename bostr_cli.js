@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const { version } = require("./package.json");
+const { nip19 } = require("nostr-tools")
 const fs = require("fs");
 const cluster = require("cluster");
 const argv = process.argv.slice(2);
@@ -10,10 +11,11 @@ function showHelp() {
   console.log(
     "Usage: bostr [command] (argv)\n" +
     "Available command:\n" +
-    "  makeconf [conffile] - Make config file\n" +
-    "  start [conffile]    - Run bostr with specified config\n" +
-    "  check [conffile]    - Check config file\n" +
-    "  help                - Show this help text\n\n" +
+    "  makeconf [conffile]  - Make config file\n" +
+    "  start [conffile]     - Run bostr with specified config\n" +
+    "  check [conffile]     - Check config file\n" +
+    "  hexconverter [nip19] - Convert NIP-19 string to hex\n" +
+    "  help                 - Show this help text\n\n" +
     "Software is licensed under BSD-3-Clause\n" +
     "https://github.com/Yonle/bostr"
   );
@@ -67,6 +69,12 @@ switch (argv[0]) {
 
     process.env.BOSTR_CONFIG_PATH = readPath(argv[1]);
     require("./index.js");
+    break;
+  case "hexconverter":
+    if (!argv[1]) return console.log("Usage: bostr hexconverter [npub|nsec|....] ....");
+    for (const i of argv.slice(1)) {
+      console.log(nip19.decode(i).data);
+    }
     break;
   default:
     if (argv[0] && (argv[0] !== "help")) {

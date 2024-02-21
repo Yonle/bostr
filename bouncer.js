@@ -204,7 +204,7 @@ function newConn(addr, client, reconn_t = 0) {
   if (client.readyState !== 1) return;
   const relay = new WebSocket(addr, {
     headers: {
-      "User-Agent": `Bostr (v${version}); The nostr relay bouncer; https://github.com/Yonle/bostr`
+      "User-Agent": `Bostr ${version}; The nostr relay bouncer; https://github.com/Yonle/bostr`
     },
     noDelay: true,
     allowSynchronousEvents: true
