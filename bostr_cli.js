@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+"use strict";
 const { version } = require("./package.json");
 const { nip19 } = require("nostr-tools")
 const fs = require("fs");

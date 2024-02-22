@@ -1,0 +1,10 @@
+img
+img/*
+Dockerfile
+compose.yaml
+hexconverter.js
+.dockerignore
+.github
+.github/*
+node_modules
+package-lock.json

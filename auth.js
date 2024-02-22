@@ -1,3 +1,4 @@
+"use strict";
 const { validateEvent, verifyEvent } = require("nostr-tools");
 const { authorized_keys, private_keys } = require(process.env.BOSTR_CONFIG_PATH || "./config");
 

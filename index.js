@@ -1,3 +1,4 @@
+"use strict";
 const config = require(process.env.BOSTR_CONFIG_PATH || "./config");
 const cluster = require("cluster");
 const fs = require("fs");

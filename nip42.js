@@ -1,3 +1,4 @@
+"use strict";
 const { finalizeEvent, nip19 } = require("nostr-tools");
 
 module.exports = (relay, pubkey, privkey, challenge) => {
