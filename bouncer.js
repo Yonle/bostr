@@ -36,6 +36,7 @@ module.exports = (ws, req, onClose) => {
   ws.pubkey = null;
   ws.rejectKinds = query.reject?.split(",").map(_ => parseInt(_));
   ws.acceptKinds = query.accept?.split(",").map(_ => parseInt(_));
+  ws.forcedLimit = parseInt(query.limit);
 
   if (authorized_keys?.length) {
     authKey = Date.now() + Math.random().toString(36);
@@ -113,6 +114,9 @@ module.exports = (ws, req, onClose) => {
               return true;
             });
           }
+
+          if (filters[fn].limit > ws.forcedLimit)
+            filters[fn].limit = ws.forcedLimit;
         }
 
         if (!ws.relays.size && !sessStarted) {

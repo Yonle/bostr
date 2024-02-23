@@ -49,6 +49,7 @@ const lastConn = new Map();
 const favicon = fs.existsSync(config.favicon) ? fs.readFileSync(config.favicon) : null;
 
 server.on('request', (req, res) => {
+  const serverAddr = `${req.headers["x-forwarded-proto"]?.replace(/http/i, "ws") || (server.isStandaloneHTTPS ? "wss" : "ws")}://${req.headers.host}${req.url}`;
   log(`${req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address} - ${req.method} ${req.url} [${req.headers["user-agent"] || ""}]`)
 
   if (req.headers.accept?.includes("application/nostr+json"))
@@ -68,13 +69,16 @@ server.on('request', (req, res) => {
 
     res.write(`\nI have ${wss.clients.size} clients currently connected to this bouncer${(process.env.CLUSTERS || config.clusters) > 1 ? " on this cluster" : ""}.\n`);
     if (config?.authorized_keys?.length) res.write("\nNOTE: This relay has configured for personal use only. Only authorized users could use this bostr relay.\n");
-    res.write(`\nConnect to this bouncer with nostr client: ${req.headers["x-forwarded-proto"]?.replace(/http/i, "ws") || (server.isStandaloneHTTPS ? "wss" : "ws")}://${req.headers.host}${req.url}`);
-    res.write(`\n\n- To make this bouncer only send specific kind of events, Connect:`);
-    res.write(`\n  ${req.headers["x-forwarded-proto"]?.replace(/http/i, "ws") || (server.isStandaloneHTTPS ? "wss" : "ws")}://${req.headers.host}${req.url}?accept=0,1`);
+    res.write(`\nConnect to this bouncer with nostr client: ${serverAddr}`);
+    res.write(`\n\n- To make connection that only send whitelisted kind of events, Connect:`);
+    res.write(`\n  ${serverAddr}?accept=0,1`);
     res.write(`\n  (Will only send events with kind 0, and 1)`);
-    res.write(`\n- To make this bouncer not sending specific kind of events, Connect:`);
-    res.write(`\n  ${req.headers["x-forwarded-proto"]?.replace(/http/i, "ws") || (server.isStandaloneHTTPS ? "wss" : "ws")}://${req.headers.host}${req.url}?reject=3,6,7`);
+    res.write(`\n\n- To make connection that do not send blacklisted kind of events, Connect:`);
+    res.write(`\n  ${serverAddr}?reject=3,6,7`);
     res.write(`\n  (Will not send events with kind 3, 6, and 7)`);
+    res.write(`\n\n- To make connection that override client's REQ limit, Connect:`);
+    res.write(`\n  ${serverAddr}?limit=50`);
+    res.write(`\n  (Will override REQ limit from client to 50 if exceeds)`);
     res.end(`\n\n---\nPowered by Bostr (${version}) - Open source Nostr bouncer\nhttps://github.com/Yonle/bostr`);
   } else if (req.url.includes("favicon") && favicon) {
     res.writeHead(200, { "Content-Type": "image/" + config.favicon?.split(".").pop() });
