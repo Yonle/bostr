@@ -1,6 +1,6 @@
 {
   "name": "bostr",
-  "version": "2.0.7-dev",
+  "version": "2.0.7",
   "description": "Nostr relay bouncer",
   "main": "index.js",
   "scripts": {
