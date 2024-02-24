@@ -81,7 +81,7 @@ server.on('request', (req, res) => {
     res.write(`\n  (Will override REQ limit from client to 50 if exceeds)`);
     res.write(`\n\n- To connect with accurate bouncing mode${config.pause_on_limit ? "" : " (Default)"}, Connect:`);
     res.write(`\n  ${serverAddr}?accurate=1`);
-    res.write(`\n  (Will consume lot of bandwidths)`);
+    res.write(`\n  (May consume lot of bandwidths)`);
     res.write(`\n\n- To connect with save mode${config.pause_on_limit ? " (Default)" : ""}, Connect:`);
     res.write(`\n  ${serverAddr}?save=1`);
     res.write(`\n  (Saves bandwidth usage)`);
