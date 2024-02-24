@@ -167,7 +167,7 @@ module.exports = (ws, req, onClose) => {
         }
         break;
       default:
-        ws.send(JSON.stringify(["NOTICE", "error: unrecognized command."]));
+        ws.send(JSON.stringify(["NOTICE", `error: unrecognized command: ${data[0]}`]));
         break;
     }
   });
