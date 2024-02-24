@@ -77,8 +77,11 @@ server.on('request', (req, res) => {
     res.write(`\n  ${serverAddr}?reject=3,6,7`);
     res.write(`\n  (Will not send events with kind 3, 6, and 7)`);
     res.write(`\n\n- To make connection that override client's REQ limit, Connect:`);
-    res.write(`\n  ${serverAddr}?limit=50`);
+    res.write(`\n  ${serverAddr}?limit=50 or ${serverAddr}?accurate=1&limit=50`);
     res.write(`\n  (Will override REQ limit from client to 50 if exceeds)`);
+    res.write(`\n\n- To connect with accurate bouncing mode, Connect:`);
+    res.write(`\n  ${serverAddr}?accurate=1`);
+    res.write(`\n  (Will consume lot of bandwidths)`);
     res.end(`\n\n---\nPowered by Bostr (${version}) - Open source Nostr bouncer\nhttps://github.com/Yonle/bostr`);
   } else if (req.url.includes("favicon") && favicon) {
     res.writeHead(200, { "Content-Type": "image/" + config.favicon?.split(".").pop() });

@@ -37,6 +37,7 @@ module.exports = (ws, req, onClose) => {
   ws.rejectKinds = query.reject?.split(",").map(_ => parseInt(_));
   ws.acceptKinds = query.accept?.split(",").map(_ => parseInt(_));
   ws.forcedLimit = parseInt(query.limit);
+  ws.accurateMode = parseInt(query.accurate);
 
   if (authorized_keys?.length) {
     authKey = Date.now() + Math.random().toString(36);
@@ -254,22 +255,20 @@ function newConn(addr, client, reconn_t = 0) {
         if (NotInSearchQuery) return;
         if (client.events.get(data[1]).has(data[2]?.id)) return; // No need to transmit once it has been transmitted before.
 
-        if (!client.pause_subs.has(data[1])) {
-          client.events.get(data[1]).add(data[2]?.id);
-          client.send(JSON.stringify(data));
-        }
+        client.events.get(data[1]).add(data[2]?.id);
+        client.send(JSON.stringify(data));
 
         // Now count for REQ limit requested by client.
         // If it's at the limit, Send EOSE to client and delete pendingEOSE of subID
 
         // Skip if EOSE has been omitted
-        if (!client.pendingEOSE.has(data[1]) || client.pause_subs.has(data[1])) return;
+        if (!client.pendingEOSE.has(data[1])) return;
         const limit = getFilterLimit(filter);
         if (limit === Infinity) return;
         if (client.events.get(data[1]).size >= limit) {
           // Once reached to <filter.limit>, send EOSE to client.
           client.send(JSON.stringify(["EOSE", data[1]]));
-          if (pause_on_limit) {
+          if (!client.accurateMode && pause_on_limit) {
             client.pause_subs.add(data[1]);
           } else {
             client.pendingEOSE.delete(data[1]);
