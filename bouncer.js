@@ -38,6 +38,7 @@ module.exports = (ws, req, onClose) => {
   ws.acceptKinds = query.accept?.split(",").map(_ => parseInt(_));
   ws.forcedLimit = parseInt(query.limit);
   ws.accurateMode = parseInt(query.accurate);
+  ws.saveMode = parseInt(query.save);
 
   if (authorized_keys?.length) {
     authKey = Date.now() + Math.random().toString(36);
@@ -268,7 +269,7 @@ function newConn(addr, client, reconn_t = 0) {
         if (client.events.get(data[1]).size >= limit) {
           // Once reached to <filter.limit>, send EOSE to client.
           client.send(JSON.stringify(["EOSE", data[1]]));
-          if (!client.accurateMode && pause_on_limit) {
+          if (!client.accurateMode && (client.saveMode || pause_on_limit)) {
             client.pause_subs.add(data[1]);
           } else {
             client.pendingEOSE.delete(data[1]);

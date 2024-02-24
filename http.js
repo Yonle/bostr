@@ -79,9 +79,12 @@ server.on('request', (req, res) => {
     res.write(`\n\n- To make connection that override client's REQ limit, Connect:`);
     res.write(`\n  ${serverAddr}?limit=50 or ${serverAddr}?accurate=1&limit=50`);
     res.write(`\n  (Will override REQ limit from client to 50 if exceeds)`);
-    res.write(`\n\n- To connect with accurate bouncing mode, Connect:`);
+    res.write(`\n\n- To connect with accurate bouncing mode${config.pause_on_limit ? "" : " (Default)"}, Connect:`);
     res.write(`\n  ${serverAddr}?accurate=1`);
     res.write(`\n  (Will consume lot of bandwidths)`);
+    res.write(`\n\n- To connect with save mode${config.pause_on_limit ? " (Default)" : ""}, Connect:`);
+    res.write(`\n  ${serverAddr}?save=1`);
+    res.write(`\n  (Saves bandwidth usage)`);
     res.end(`\n\n---\nPowered by Bostr (${version}) - Open source Nostr bouncer\nhttps://github.com/Yonle/bostr`);
   } else if (req.url.includes("favicon") && favicon) {
     res.writeHead(200, { "Content-Type": "image/" + config.favicon?.split(".").pop() });

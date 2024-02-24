@@ -49,7 +49,7 @@ module.exports = {
   // Could save client's bandwidth. Disable this if you need to get more events.
   //
   // You may also need to adjust <max_eose_score>.
-  pause_on_limit: false,
+  pause_on_limit: true,
 
   // Maximum of received EOSE from relays to send EOSE to client.
   // Normally, waiting EOSE from 3 relays should be enough. Leaving it with 0 equals wait for every established relays.
