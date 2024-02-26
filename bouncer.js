@@ -299,14 +299,16 @@ function newConn(addr, client, reconn_t = 0) {
         break;
 
       case "NOTICE":
-      case "CLOSED":
         if (typeof(data[1]) !== "string") return;
         if (data[1].startsWith("rate-limited")) relay.ratelimit = Date.now();
+
         break;
 
+      case "CLOSED":
       case "OK":
         if (typeof(data[2]) !== "string") return;
         if (data[2].startsWith("rate-limited")) relay.ratelimit = Date.now();
+
         break;
     }
   });
