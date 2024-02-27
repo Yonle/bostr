@@ -244,14 +244,14 @@ function newConn(addr, client, reconn_t = 0) {
         if (data.length < 3 || typeof(data[1]) !== "string" || typeof(data[2]) !== "object") return;
         if (!client.subalias.has(data[1])) return;
         data[1] = client.subalias.get(data[1]);
-        if (client.pause_subs.has(data[1])) return;
+        const filter = client.mergedFilters.get(data[1]);
+        if (client.pause_subs.has(data[1]) && (!filter.since || filter.since < data[2].created_at)) return;
 
         if (client.rejectKinds && client.rejectKinds.includes(data[2]?.id)) return;
 
         const filters = client.subs.get(data[1]);
         if (!matchFilters(filters, data[2])) return;
 
-        const filter = client.mergedFilters.get(data[1]);
         const NotInSearchQuery = "search" in filter && !data[2]?.content?.toLowerCase().includes(filter.search.toLowerCase());
         if (NotInSearchQuery) return;
         if (client.events.get(data[1]).has(data[2]?.id)) return; // No need to transmit once it has been transmitted before.
