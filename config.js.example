@@ -86,6 +86,13 @@ module.exports = {
     // ....
   ],
 
+  // A blacklist of blocked event publishers.
+  blocked_publishers: [
+    // "pubkey-in-hex",
+    // "npub ....",
+    // ....
+  ],
+
   // Block incomming websocket connections from the following hosts.
   blocked_hosts: [
     // "127.0.0.1",
