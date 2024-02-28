@@ -139,6 +139,9 @@ module.exports = {
   // Path to favicon file.
   favicon: "",
 
+  // Forward client IP address to upstream relays with x-forwarded-for
+  forward_ip_address_to_upstream: true,
+
   // Nostr relays to bounce [Required]
   relays: [
     "wss://example1.com",
