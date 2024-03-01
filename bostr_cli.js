@@ -13,8 +13,8 @@ function showHelp() {
     "Usage: bostr [command] (argv)\n" +
     "Available command:\n" +
     "  makeconf [conffile]  - Make config file\n" +
+    "  checkconf [conffile] - Check config file\n" +
     "  start [conffile]     - Run bostr with specified config\n" +
-    "  check [conffile]     - Check config file\n" +
     "  hexconverter [nip19] - Convert NIP-19 string to hex\n" +
     "  help                 - Show this help text\n\n" +
     "Software is licensed under BSD-3-Clause\n" +
@@ -39,8 +39,8 @@ switch (argv[0]) {
     console.log(`Edit ${argv[1]} with your editor and start with the following command:`);
     console.log(`  $ bostr start ${argv[1]}\n`);
     break;
-  case "check": {
-    if (!argv[1]) return console.log("Usage: bostr check [conffile]");
+  case "checkconf": {
+    if (!argv[1]) return console.log("Usage: bostr checkconf [conffile]");
     if (!fs.existsSync(argv[1])) {
       console.error("Config not exists.");
       return process.exit(254);
