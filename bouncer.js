@@ -71,7 +71,7 @@ module.exports = (ws, req, onClose) => {
         if (!authorized) return;
         if (!validateEvent(data[1])) return ws.send(JSON.stringify(["NOTICE", "error: invalid event"]));
         if (data[1].kind == 22242) return ws.send(JSON.stringify(["OK", data[1].id, false, "rejected: kind 22242"]));
-        if (blocked_publishers.includes(data[1].pubkey)) return ws.send(JSON.stringify(["OK", data[1].id, false, "blocked: you are in the bouncer blocklist."]));
+        if (blocked_publishers?.includes(data[1].pubkey)) return ws.send(JSON.stringify(["OK", data[1].id, false, "blocked: you are in the bouncer blocklist."]));
 
         if (
           approved_publishers?.length &&
