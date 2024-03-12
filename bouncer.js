@@ -40,7 +40,6 @@ module.exports = (ws, req, onClose) => {
   ws.forcedLimit = parseInt(query.limit);
   ws.accurateMode = parseInt(query.accurate);
   ws.saveMode = parseInt(query.save);
-  ws.connectedRelays = 0;
 
   if (authorized_keys?.length) {
     authKey = Date.now() + Math.random().toString(36);
@@ -229,7 +228,6 @@ function newConn(addr, client, reconn_t = 0) {
   relay.on('open', _ => {
     if (client.readyState !== 1) return relay.terminate();
     reconn_t = 0;
-    client.connectedRelays++;
     if (log_about_relays) console.log(process.pid, "---", client.ip, `${relay.url} is connected`);
 
     for (const i of client.my_events) {
@@ -292,9 +290,9 @@ function newConn(addr, client, reconn_t = 0) {
         data[1] = client.subalias.get(data[1]);
         if (!client.pendingEOSE.has(data[1])) return;
         client.pendingEOSE.set(data[1], client.pendingEOSE.get(data[1]) + 1);
-        if (log_about_relays) console.log(process.pid, "---", client.ip, `got EOSE from ${relay.url} for ${data[1]}. There are ${client.pendingEOSE.get(data[1])} EOSE received out of ${client.connectedRelays} connected relays.`);
+        if (log_about_relays) console.log(process.pid, "---", client.ip, `got EOSE from ${relay.url} for ${data[1]}. There are ${client.pendingEOSE.get(data[1])} EOSE received out of ${client.relays.size} connected relays.`);
 
-        if (wait_eose && ((client.pendingEOSE.get(data[1]) < max_eose_score) || (client.pendingEOSE.get(data[1]) < client.connectedRelays))) return;
+        if (wait_eose && ((client.pendingEOSE.get(data[1]) < max_eose_score) || (client.pendingEOSE.get(data[1]) < client.relays.size))) return;
         client.pendingEOSE.delete(data[1]);
 
         if (client.pause_subs.has(data[1])) {
@@ -330,7 +328,6 @@ function newConn(addr, client, reconn_t = 0) {
   relay.on('close', _ => {
     if (client.readyState !== 1) return;
     client.relays.delete(relay); // Remove this socket session from <client.relays> list
-    client.connectedRelays--;
     if (log_about_relays) console.log(process.pid, "-!-", client.ip, "Disconnected from", relay.url);
     reconn_t += reconnect_time || 5000
     const reconnectTimeout = setTimeout(_ => {
