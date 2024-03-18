@@ -20,6 +20,10 @@ module.exports = {
   // 0 will make bostr run clusters with available parallelism / CPU cores.
   clusters: 1,
 
+  // Numbers of idle sessions to be created
+  // Default: 1
+  idle_sessions: 1,
+
   // Log about bouncer connection with relays?
   log_about_relays: false,
 
@@ -138,9 +142,6 @@ module.exports = {
 
   // Path to favicon file.
   favicon: "",
-
-  // Forward client IP address to upstream relays with x-forwarded-for
-  forward_ip_address_to_upstream: true,
 
   // Nostr relays to bounce [Required]
   relays: [

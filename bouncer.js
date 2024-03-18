@@ -6,7 +6,7 @@ const { validateEvent, nip19, matchFilters, mergeFilters, getFilterLimit } = req
 const auth = require("./auth.js");
 const nip42 = require("./nip42.js");
 
-let { relays, approved_publishers, blocked_publishers, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, max_eose_score, broadcast_ratelimit, upstream_ratelimit_expiration, max_client_subs, forward_ip_address_to_upstream } = require(process.env.BOSTR_CONFIG_PATH || "./config");
+let { relays, approved_publishers, blocked_publishers, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, max_eose_score, broadcast_ratelimit, upstream_ratelimit_expiration, max_client_subs, forward_ip_address_to_upstream, idle_sessions } = require(process.env.BOSTR_CONFIG_PATH || "./config");
 
 log_about_relays = process.env.LOG_ABOUT_RELAYS || log_about_relays;
 authorized_keys = authorized_keys?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
@@ -18,7 +18,7 @@ if (relays.length < max_eose_score) max_eose_score = 0;
 
 const csess = new Map(); // this is used for relays.
 const userRelays = new Map(); // per ID contains Set() of <WebSocket>
-const orphanSess = new Set();
+const idleSess = new Set();
 
 // CL - User socket
 module.exports = (ws, req, onClose) => {
@@ -91,7 +91,7 @@ module.exports = (ws, req, onClose) => {
 
         if (!sessStarted) {
           console.log(process.pid, `>>>`, `${ws.ip} executed ${data[0]} command for the first. Initializing session`);
-          getOrphanSess(ws);
+          getIdleSess(ws);
           sessStarted = true;
         }
 
@@ -128,7 +128,7 @@ module.exports = (ws, req, onClose) => {
 
         if (!sessStarted) {
           console.log(process.pid, `>>>`, `${ws.ip} executed ${data[0]} command for the first. Initializing session`);
-          getOrphanSess(ws);
+          getIdleSess(ws);
           sessStarted = true;
         }
 
@@ -200,7 +200,7 @@ function newsess() {
   const id = Date.now() + "_" + process.pid + "_" + Math.random();
   userRelays.set(id, new Set());
   csess.set(id, null);
-  orphanSess.add(id);
+  idleSess.add(id);
   relays.forEach(_ => newConn(_, id));
 }
 
@@ -215,9 +215,9 @@ function bc(msg, id) {
   }
 }
 
-function getOrphanSess(ws) {
-  ws.id = orphanSess.values().next().value;
-  orphanSess.delete(ws.id);
+function getIdleSess(ws) {
+  ws.id = idleSess.values().next().value;
+  idleSess.delete(ws.id);
   csess.set(ws.id, ws);
 
   if (log_about_relays) console.log(process.pid, "---", ws.ip, "is now using session", ws.id);
@@ -362,4 +362,6 @@ function newConn(addr, id, reconn_t = 0) {
   userRelays.get(id).add(relay); // Add this socket session to <client.relays>
 }
 
-newsess();
+for (let i = 1; i <= (idle_sessions || 1); i++) {
+  newsess();
+}
