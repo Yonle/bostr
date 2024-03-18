@@ -184,6 +184,7 @@ module.exports = (ws, req, onClose) => {
 
     console.log(process.pid, "---", `${ws.ip} disconnected`);
 
+    if (!sessStarted) return;
     for (const sock of userRelays.get(ws.id)) {
       sock.terminate();
     }
