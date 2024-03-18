@@ -220,6 +220,8 @@ function getOrphanSess(ws) {
   orphanSess.delete(ws.id);
   csess.set(ws.id, ws);
 
+  if (log_about_relays) console.log(process.pid, "---", ws.ip, "is now using session", ws.id);
+
   newsess();
 }
 
