@@ -6,7 +6,7 @@ const { validateEvent, nip19, matchFilters, mergeFilters, getFilterLimit } = req
 const auth = require("./auth.js");
 const nip42 = require("./nip42.js");
 
-let { relays, approved_publishers, blocked_publishers, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, max_eose_score, broadcast_ratelimit, upstream_ratelimit_expiration, max_client_subs, forward_ip_address_to_upstream, idle_sessions } = require(process.env.BOSTR_CONFIG_PATH || "./config");
+let { relays, approved_publishers, blocked_publishers, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, max_eose_score, broadcast_ratelimit, upstream_ratelimit_expiration, max_client_subs, idle_sessions } = require(process.env.BOSTR_CONFIG_PATH || "./config");
 
 log_about_relays = process.env.LOG_ABOUT_RELAYS || log_about_relays;
 authorized_keys = authorized_keys?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
@@ -326,12 +326,16 @@ function newConn(addr, id, reconn_t = 0) {
         if (typeof(data[1]) !== "string") return;
         if (data[1].startsWith("rate-limited")) relay.ratelimit = Date.now();
 
+        if (log_about_relays) console.log(process.pid, id, relay.url, data[0], data[1]);
+
         break;
 
       case "CLOSED":
       case "OK":
         if (typeof(data[2]) !== "string") return;
         if (data[2].startsWith("rate-limited")) relay.ratelimit = Date.now();
+
+        if (log_about_relays) console.log(process.pid, id, relay.url, data[0], data[1], data[2]);
 
         break;
     }
