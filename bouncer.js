@@ -269,7 +269,7 @@ function newConn(addr, id, reconn_t = 0) {
         if (!client.subalias.has(data[1])) return;
         data[1] = client.subalias.get(data[1]);
         const filter = client.mergedFilters.get(data[1]);
-        if (client.pause_subs.has(data[1]) && (filter.since < data[2].created_at)) return;
+        if (client.pause_subs.has(data[1]) && (filter.since > data[2].created_at)) return;
 
         if (client.rejectKinds && client.rejectKinds.includes(data[2]?.id)) return;
 
