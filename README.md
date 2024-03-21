@@ -2,10 +2,10 @@
 A nostr relay bouncer.
 
 ## What is this?
-**Bostr** is a multi nostr relay **proxy** that were serving as a nostr relay.
+**Bostr** is an nostr relay aggregator **proxy** that acts like a regular nostr relay. It connects to multiple configured relays to exchange data (events).
 
 ## Why?
-Nostr relays is a bunch of dummy servers that store user events. Normally nostr clients usually connects to more than 5-10 relays to receive and transmit events.
+Nostr relays is a bunch of dummy servers that store user events. Normally nostr clients connects to more than 5-10 relays to receive and transmit events.
 
 Due to it's nature that connects to more than just a single relay, **Client bandwidth usage is high.** And because of this, Nostr bandwidth usage is not really recommended for some users, notably **mobile data users.**
 
@@ -15,8 +15,10 @@ This project solve the problem by **reducing** the number of connected relays, a
 ![How it works](img/how_it_works.png)
 
 ## Installation
-- [NodeJS](https://nodejs.org) (v16 or up)
+- [NodeJS](https://nodejs.org) (v18 or up)
 - A fast internet connection
+
+You could set up an bostr bouncer by installing [Bostr CLI](#bostr-cli), or setting up via [The Source Code](#source-code), or via [Docker](#docker).
 
 ### Bostr CLI
 Install bostr via `npm`:
@@ -74,20 +76,26 @@ tmux new -d "node index.js"
 
 When configuring reverse proxy, Ensure that `x-forwarded-proto` header was set as `https`.
 
-## Environment Variable
-- `CLUSTERS` - Run Bostr with specified numbers of clusters.
-- `LOG_ABOUT_RELAYS` - Whenever to log about relay connections
-
-## Docker
-### Quick Run
+### Docker
 ```
 git clone https://github.com/Yonle/bostr
 cd bostr
+cp config.js.example config.js
+```
+
+You will then need to edit `config.js` before running the bouncer.
+
+#### Running
+```
 docker build -t bostr:local .
 docker run --rm --name bostr -p 8080:8080 -v ./config.js:/usr/src/app/config.js bostr:local
 ```
 
-**Note:** You will need to edit `config.js` before running the bouncer.
+## Environment Variables
+You could specify the following environment variables to override the current settings:
+
+- `CLUSTERS` - Run Bostr with specified numbers of clusters.
+- `LOG_ABOUT_RELAYS` - Whenever to log about relay connections.
 
 ## License
 
