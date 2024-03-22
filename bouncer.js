@@ -111,7 +111,6 @@ module.exports = (ws, req, onClose) => {
 
         if (!Array.isArray(filter.kinds)) {
           filter.kinds = ws.acceptKinds;
-          continue;
         } else {
           filter.kinds = filter.kinds?.filter(kind => {
             if (ws.rejectKinds && ws.rejectKinds.includes(kind)) return false;
