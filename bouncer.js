@@ -2,7 +2,7 @@
 const { version } = require("./package.json");
 const WebSocket = require("ws");
 const querystring = require("querystring");
-const { validateEvent, nip19, matchFilters, mergeFilters, getFilterLimit } = require("nostr-tools");
+const { validateEvent, nip19, matchFilter, mergeFilters, getFilterLimit } = require("nostr-tools");
 const auth = require("./auth.js");
 const nip42 = require("./nip42.js");
 
@@ -109,7 +109,7 @@ module.exports = (ws, req, onClose) => {
         const filters = data.slice(2);
         let filter = mergeFilters(...filters);
 
-        if (!Array.isArray(filter.kinds)) {
+        if (!Array.isArray(filter.kinds) && ws.acceptKinds) {
           filter.kinds = ws.acceptKinds;
         } else {
           filter.kinds = filter.kinds?.filter(kind => {
@@ -133,7 +133,7 @@ module.exports = (ws, req, onClose) => {
         ws.pause_subs.delete(origID);
         ws.subalias.set(faked, origID);
         ws.fakesubalias.set(origID, faked);
-        if (!filter.since) filter.since = Math.floor(Date.now() / 1000); // Will not impact everything. Only used for handling passing pause_on_limit (or save mode)
+        //if (!filter.since) filter.since = Math.floor(Date.now() / 1000); // Will not impact everything. Only used for handling passing pause_on_limit (or save mode)
         bc(["REQ", faked, filter], ws.id);
         if (filter.limit < 1) return ws.send(JSON.stringify(["EOSE", origID]));
         ws.pendingEOSE.set(origID, 0);
@@ -263,11 +263,9 @@ function newConn(addr, id, reconn_t = 0) {
         data[1] = client.subalias.get(data[1]);
         const filter = client.subs.get(data[1]);
         if (client.pause_subs.has(data[1]) && (filter.since > data[2].created_at)) return;
-
         if (client.rejectKinds && client.rejectKinds.includes(data[2]?.id)) return;
 
-        const filters = client.subs.get(data[1]);
-        if (!matchFilters(filters, data[2])) return;
+        if (!matchFilter(filter, data[2])) return;
 
         const NotInSearchQuery = "search" in filter && !data[2]?.content?.toLowerCase().includes(filter.search.toLowerCase());
         if (NotInSearchQuery) return;
