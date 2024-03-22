@@ -36,7 +36,6 @@ module.exports = (ws, req, onClose) => {
   ws.reconnectTimeout = new Set(); // relays timeout() before reconnection. Only use after client disconnected.
   ws.subalias = new Map();
   ws.fakesubalias = new Map();
-  ws.mergedFilters = new Map();
   ws.pubkey = null;
   ws.rejectKinds = query.reject?.split(",").map(_ => parseInt(_));
   ws.acceptKinds = query.accept?.split(",").map(_ => parseInt(_));
@@ -107,24 +106,22 @@ module.exports = (ws, req, onClose) => {
         if (ws.subs.has(data[1])) return ws.send(JSON.stringify(["CLOSED", data[1], "duplicate: subscription already opened"]));
         const origID = data[1];
         const faked = Date.now() + Math.random().toString(36);
-        let filters = data.slice(2);
+        const filters = data.slice(2);
         let filter = mergeFilters(...filters);
 
-        for (const fn in filters) {
-          if (!Array.isArray(filters[fn].kinds)) {
-            filters[fn].kinds = ws.acceptKinds;
-            continue;
-          } else {
-            filters[fn].kinds = filters[fn].kinds?.filter(kind => {
-              if (ws.rejectKinds && ws.rejectKinds.includes(kind)) return false;
-              if (ws.acceptKinds && !ws.acceptKinds.includes(kind)) return false;
-              return true;
-            });
-          }
-
-          if (filters[fn].limit > ws.forcedLimit)
-            filters[fn].limit = ws.forcedLimit;
+        if (!Array.isArray(filter.kinds)) {
+          filter.kinds = ws.acceptKinds;
+          continue;
+        } else {
+          filter.kinds = filter.kinds?.filter(kind => {
+            if (ws.rejectKinds && ws.rejectKinds.includes(kind)) return false;
+            if (ws.acceptKinds && !ws.acceptKinds.includes(kind)) return false;
+            return true;
+          });
         }
+
+        if (filter.limit > ws.forcedLimit)
+          filter.limit = ws.forcedLimit;
 
         if (!sessStarted) {
           console.log(process.pid, `>>>`, `${ws.ip} executed ${data[0]} command for the first. Initializing session`);
@@ -132,15 +129,13 @@ module.exports = (ws, req, onClose) => {
           sessStarted = true;
         }
 
-        ws.subs.set(origID, filters);
+        ws.subs.set(origID, filter);
         ws.events.set(origID, new Set());
         ws.pause_subs.delete(origID);
         ws.subalias.set(faked, origID);
         ws.fakesubalias.set(origID, faked);
         if (!filter.since) filter.since = Math.floor(Date.now() / 1000); // Will not impact everything. Only used for handling passing pause_on_limit (or save mode)
-        ws.mergedFilters.set(origID, filter);
-        data[1] = faked;
-        bc(data, ws.id);
+        bc(["REQ", faked, filter], ws.id);
         if (filter.limit < 1) return ws.send(JSON.stringify(["EOSE", origID]));
         ws.pendingEOSE.set(origID, 0);
         break;
@@ -157,7 +152,6 @@ module.exports = (ws, req, onClose) => {
         ws.pause_subs.delete(origID);
         ws.fakesubalias.delete(origID);
         ws.subalias.delete(faked);
-        ws.mergedFilters.delete(origID);
 
         data[1] = faked;
         bc(data, ws.id);
@@ -249,7 +243,7 @@ function newConn(addr, id, reconn_t = 0) {
     }
 
     for (const i of client.subs) {
-      relay.send(JSON.stringify(["REQ", client.fakesubalias.get(i[0]), ...i[1]]));
+      relay.send(JSON.stringify(["REQ", client.fakesubalias.get(i[0]), i[1]]));
     }
   });
 
@@ -268,7 +262,7 @@ function newConn(addr, id, reconn_t = 0) {
         if (data.length < 3 || typeof(data[1]) !== "string" || typeof(data[2]) !== "object") return;
         if (!client.subalias.has(data[1])) return;
         data[1] = client.subalias.get(data[1]);
-        const filter = client.mergedFilters.get(data[1]);
+        const filter = client.subs.get(data[1]);
         if (client.pause_subs.has(data[1]) && (filter.since > data[2].created_at)) return;
 
         if (client.rejectKinds && client.rejectKinds.includes(data[2]?.id)) return;
