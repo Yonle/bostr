@@ -104,8 +104,19 @@ module.exports = (ws, req, onClose) => {
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: expected subID a string. but got the otherwise."]));
         if (typeof(data[2]) !== "object") return ws.send(JSON.stringify(["CLOSED", data[1], "error: expected filter to be obj, instead gives the otherwise."]));
         if ((max_client_subs !== -1) && (ws.subs.size > max_client_subs)) return ws.send(JSON.stringify(["CLOSED", data[1], "rate-limited: too many subscriptions."]));
-        if (ws.subs.has(data[1])) return ws.send(JSON.stringify(["CLOSED", data[1], "duplicate: subscription already opened"]));
         const origID = data[1];
+        if (ws.subs.has(data[1])) {
+          const faked = ws.fakesubalias.get(origID);
+          ws.subs.delete(origID);
+          ws.events.delete(origID);
+          ws.pendingEOSE.delete(origID);
+          ws.pause_subs.delete(origID);
+          ws.fakesubalias.delete(origID);
+          ws.subalias.delete(faked);
+          ws.mergedFilters.delete(origID);
+          bc(["CLOSE", faked], ws.id);
+        };
+
         const faked = Date.now() + Math.random().toString(36);
         let filters = data.slice(2);
         let filter = mergeFilters(...filters);
@@ -148,7 +159,7 @@ module.exports = (ws, req, onClose) => {
       case "CLOSE":
         if (!authorized) return;
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
-        if (!ws.fakesubalias.has(data[1])) return ws.send(JSON.stringify(["CLOSED", data[1], "error: this sub is not opened."]));
+        if (!ws.subs.has(data[1])) return ws.send(JSON.stringify(["CLOSED", data[1], "error: this sub is not opened."]));
         const origID = data[1];
         const faked = ws.fakesubalias.get(origID);
         ws.subs.delete(origID);
