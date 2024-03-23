@@ -316,7 +316,7 @@ function newConn(addr, id, reconn_t = 0) {
 
         if (log_about_relays) console.log(process.pid, "---", id, `got EOSE from ${relay.url} for ${data[1]}. There are ${client.pendingEOSE.get(data[1])} EOSE received out of ${userRelays.get(id).size} connected relays.`);
 
-        if (wait_eose && ((client.pendingEOSE.get(data[1]) < max_eose_score) || (client.pendingEOSE.get(data[1]) < userRelays.get(id).size))) return;
+        if (wait_eose && ((client.pendingEOSE.get(data[1]) < max_eose_score) || (client.pendingEOSE.get(data[1]) < userRelays.get(id).size)) && relay.isCache) return;
         client.pendingEOSE.delete(data[1]);
 
         if (client.pause_subs.has(data[1])) {
