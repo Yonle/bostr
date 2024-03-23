@@ -271,8 +271,10 @@ function newConn(addr, id, reconn_t = 0) {
       case "EVENT": {
         if (data.length < 3 || typeof(data[1]) !== "string" || typeof(data[2]) !== "object") return;
         if (!client.subalias.has(data[1])) return;
-        if (!relay.isCache) bc(["EVENT", data[2]], id, true); // store to cache relay
         data[1] = client.subalias.get(data[1]);
+
+        if (client.events.get(data[1]).has(data[2]?.id)) return; // No need to transmit once it has been transmitted before.
+        if (!relay.isCache) bc(["EVENT", data[2]], id, true); // store to cache relay
         const filter = client.mergedFilters.get(data[1]);
         if (client.pause_subs.has(data[1]) && (filter.since > data[2].created_at) && !relay.isCache) return;
 
@@ -283,7 +285,6 @@ function newConn(addr, id, reconn_t = 0) {
 
         const NotInSearchQuery = "search" in filter && !data[2]?.content?.toLowerCase().includes(filter.search.toLowerCase());
         if (NotInSearchQuery) return;
-        if (client.events.get(data[1]).has(data[2]?.id)) return; // No need to transmit once it has been transmitted before.
 
         client.events.get(data[1]).add(data[2]?.id);
         client.send(JSON.stringify(data));
