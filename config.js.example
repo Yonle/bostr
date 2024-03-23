@@ -154,8 +154,8 @@ module.exports = {
   // Cache relays - Store received events to cache relay(s) (Optional).
   // Could improve the speed of event deliveries.
   //
-  // Ensure that the cache relay does not has websocket ratelimit being set.
-  // CAUTION: - Cache relay is intensive in storing events. Watch for CPU usage.
+  // Ensure that the cache relay does not have websocket ratelimit being set.
+  // CAUTION: - Cache relay is intensive in storing events.
   //          - Only works best with only 1 cache relay.
   //          - Things may not work properly if you configure more than just a single cache relays.
   cache_relays: [
