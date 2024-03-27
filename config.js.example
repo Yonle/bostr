@@ -30,6 +30,9 @@ module.exports = {
   // Use deflate compression for websocket.
   perMessageDeflate: true,
 
+  // Do not accept bot (This only checks whenever client respond to AUTH)
+  nobot: true,
+
   // Time before reconnect to relays in milliseconds.
   reconnect_time: 5000,
 
