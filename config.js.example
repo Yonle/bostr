@@ -30,8 +30,11 @@ module.exports = {
   // Use deflate compression for websocket.
   perMessageDeflate: true,
 
-  // Do not accept bot (This only checks whenever client respond to AUTH)
-  nobot: true,
+  // Reject scraper requests.
+  // This only checks whenever client respond to bouncer's AUTH.
+  //
+  // NOTE: - Require NIP-42 compatible nostr client.
+  noscraper: true,
 
   // Time before reconnect to relays in milliseconds.
   reconnect_time: 5000,
