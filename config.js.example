@@ -34,6 +34,7 @@ module.exports = {
   // This only checks whenever client respond to bouncer's AUTH.
   //
   // NOTE: - Require NIP-42 compatible nostr client.
+  //       - This will also block unauthorized EVENT.
   noscraper: true,
 
   // Time before reconnect to relays in milliseconds.
