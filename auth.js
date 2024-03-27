@@ -8,7 +8,7 @@ module.exports = (authKey, data, ws, req) => {
     return false;
   }
 
-  if (!authorized_keys?.includes(data.pubkey) && !(private_keys && private_keys[data.pubkey])) {
+  if ((authorized_keys?.length || Object.keys(private_keys).length) && !authorized_keys?.includes(data.pubkey) && !(private_keys && private_keys[data.pubkey])) {
     ws.send(JSON.stringify(["OK", data.id, false, "unauthorized."]));
     return false;
   }

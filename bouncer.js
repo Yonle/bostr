@@ -6,7 +6,7 @@ const { validateEvent, nip19, matchFilters, mergeFilters, getFilterLimit } = req
 const auth = require("./auth.js");
 const nip42 = require("./nip42.js");
 
-let { relays, approved_publishers, blocked_publishers, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, max_eose_score, broadcast_ratelimit, upstream_ratelimit_expiration, max_client_subs, idle_sessions, cache_relays } = require(process.env.BOSTR_CONFIG_PATH || "./config");
+let { relays, approved_publishers, blocked_publishers, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, max_eose_score, broadcast_ratelimit, upstream_ratelimit_expiration, max_client_subs, idle_sessions, cache_relays, nobot } = require(process.env.BOSTR_CONFIG_PATH || "./config");
 
 log_about_relays = process.env.LOG_ABOUT_RELAYS || log_about_relays;
 authorized_keys = authorized_keys?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
@@ -44,7 +44,7 @@ module.exports = (ws, req, onClose) => {
   ws.accurateMode = parseInt(query.accurate);
   ws.saveMode = parseInt(query.save);
 
-  if (authorized_keys?.length) {
+  if (nobot || authorized_keys?.length) {
     authKey = Date.now() + Math.random().toString(36);
     authorized = false;
     ws.send(JSON.stringify(["AUTH", authKey]));
@@ -71,10 +71,13 @@ module.exports = (ws, req, onClose) => {
 
     switch (data[0]) {
       case "EVENT":
-        if (!authorized) return;
         if (!validateEvent(data[1])) return ws.send(JSON.stringify(["NOTICE", "error: invalid event"]));
         if (data[1].kind == 22242) return ws.send(JSON.stringify(["OK", data[1].id, false, "rejected: kind 22242"]));
-        if (blocked_publishers?.includes(data[1].pubkey)) return ws.send(JSON.stringify(["OK", data[1].id, false, "blocked: you are in the bouncer blocklist."]));
+        if (blocked_publishers?.includes(data[1].pubkey)) return ws.send(JSON.stringify(["OK", data[1].id, false, "blocked: this event author is blacklisted."]));
+        if (!authorized) {
+          ws.send(JSON.stringify(["OK", data[1].id, false, "auth-required: authentication is required to perform this action."]));
+          return ws.send(JSON.stringify(["AUTH", authKey]));
+        }
 
         if (
           approved_publishers?.length &&
@@ -99,10 +102,13 @@ module.exports = (ws, req, onClose) => {
         ws.send(JSON.stringify(["OK", data[1]?.id, true, ""]));
         break;
       case "REQ": {
-        if (!authorized) return;
         if (data.length < 3) return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: expected subID a string. but got the otherwise."]));
         if (typeof(data[2]) !== "object") return ws.send(JSON.stringify(["CLOSED", data[1], "error: expected filter to be obj, instead gives the otherwise."]));
+        if (!authorized) {
+          ws.send(JSON.stringify(["CLOSED", data[1], "auth-required: authentication is required to perform this action."]));
+          return ws.send(JSON.stringify(["AUTH", authKey]));
+        }
         if ((max_client_subs !== -1) && (ws.subs.size > max_client_subs)) return ws.send(JSON.stringify(["CLOSED", data[1], "rate-limited: too many subscriptions."]));
         const origID = data[1];
         if (ws.subs.has(data[1])) {
