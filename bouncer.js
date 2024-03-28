@@ -219,19 +219,28 @@ function newsess() {
   userRelays.set(id, new Set());
   csess.set(id, null);
   idleSess.add(id);
-  cache_relays?.forEach(_ => newConn(_, id));
-  relays.forEach(_ => newConn(_, id));
+
+  if (cache_relays) {
+    for (const url of cache_relays) {
+      newConn(url, id);
+    }
+  }
+
+  for (const url of relays) {
+    newConn(url, id);
+  }
 }
 
 // WS - Broadcast message to every existing sockets
 function bc(msg, id, toCacheOnly) {
-  for (const sock of userRelays.get(id)) {
-    if (sock.readyState !== 1) continue;
-    if (toCacheOnly && !sock.isCache) continue
+  for (const relay of userRelays.get(id)) {
+    if (relay.readyState !== 1) continue;
+    if (toCacheOnly && !relay.isCache) continue;
 
     // skip the ratelimit after <config.upstream_ratelimit_expiration>
-    if ((upstream_ratelimit_expiration) > (Date.now() - sock.ratelimit)) continue;
-    sock.send(JSON.stringify(msg));
+    if ((upstream_ratelimit_expiration) > (Date.now() - relay.ratelimit)) continue;
+
+    relay.send(JSON.stringify(msg));
   }
 }
 
@@ -262,7 +271,7 @@ function newConn(addr, id, reconn_t = 0) {
     if (!csess.has(id)) return relay.terminate();
     const client = csess.get(id);
     reconn_t = 0;
-    if (log_about_relays) console.log(process.pid, "---", id, `${relay.url} is connected`);
+    if (log_about_relays) console.log(process.pid, "---", id, `${addr} is connected`);
 
     if (!client) return;
     for (const i of client.my_events) {
@@ -331,7 +340,7 @@ function newConn(addr, id, reconn_t = 0) {
         if (!client.pendingEOSE.has(data[1])) return;
         client.pendingEOSE.set(data[1], client.pendingEOSE.get(data[1]) + 1);
 
-        if (log_about_relays) console.log(process.pid, "---", id, `got EOSE from ${relay.url} for ${data[1]}. There are ${client.pendingEOSE.get(data[1])} EOSE received out of ${userRelays.get(id).size} connected relays.`);
+        if (log_about_relays) console.log(process.pid, "---", id, `got EOSE from ${addr} for ${data[1]}. There are ${client.pendingEOSE.get(data[1])} EOSE received out of ${userRelays.get(id).size} connected relays.`);
 
         if (wait_eose && ((client.pendingEOSE.get(data[1]) < max_eose_score) || (client.pendingEOSE.get(data[1]) < userRelays.get(id).size))) return;
         client.pendingEOSE.delete(data[1]);
@@ -351,7 +360,7 @@ function newConn(addr, id, reconn_t = 0) {
         if (typeof(data[1]) !== "string") return;
         if (data[1].startsWith("rate-limited")) relay.ratelimit = Date.now();
 
-        if (log_about_relays) console.log(process.pid, id, relay.url, data[0], data[1]);
+        if (log_about_relays) console.log(process.pid, id, addr, data[0], data[1]);
 
         break;
 
@@ -360,20 +369,23 @@ function newConn(addr, id, reconn_t = 0) {
         if (typeof(data[2]) !== "string") return;
         if (data[2].startsWith("rate-limited")) relay.ratelimit = Date.now();
 
-        if (log_about_relays) console.log(process.pid, id, relay.url, data[0], data[1], data[2]);
+        if (log_about_relays) console.log(process.pid, id, addr, data[0], data[1], data[2]);
+
+        if ((data[0] === "CLOSED") && client.pendingEOSE.has(data[1]))
+          client.pendingEOSE.set(data[1], client.pendingEOSE.get(data[1]) + 1);
 
         break;
     }
   });
 
   relay.on('error', _ => {
-    if (log_about_relays) console.error(process.pid, "-!-", id, relay.url, _.toString())
+    if (log_about_relays) console.error(process.pid, "-!-", id, addr, _.toString())
   });
 
   relay.on('close', _ => {
     if (!userRelays.has(id)) return;
     userRelays.get(id).delete(relay); // Remove this socket session from <client.relays> list
-    if (log_about_relays) console.log(process.pid, "-!-", id, "Disconnected from", relay.url);
+    if (log_about_relays) console.log(process.pid, "-!-", id, "Disconnected from", addr);
     reconn_t += reconnect_time || 5000
     setTimeout(_ => {
       newConn(addr, id, reconn_t);
@@ -384,8 +396,8 @@ function newConn(addr, id, reconn_t = 0) {
     if (!userRelays.has(id)) return;
     userRelays.get(id).delete(relay);
     if (res.statusCode >= 500) return relay.emit("close", null);
-    relays = relays.filter(_ => !relay.url.startsWith(_));
-    console.log(process.pid, "-!-", `${relay.url} give status code ${res.statusCode}. Not (re)connect with new session again.`);
+    relays = relays.filter(_ => _ == addr);
+    console.log(process.pid, "-!-", `${addr} give status code ${res.statusCode}. Not (re)connect with new session again.`);
   });
 
   userRelays.get(id).add(relay); // Add this socket session to <client.relays>
