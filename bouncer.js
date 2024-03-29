@@ -396,7 +396,7 @@ function newConn(addr, id, reconn_t = 0) {
     if (!userRelays.has(id)) return;
     userRelays.get(id).delete(relay);
     if (res.statusCode >= 500) return relay.emit("close", null);
-    relays = relays.filter(_ => _ == addr);
+    relays = relays.filter(_ => _ != addr);
     console.log(process.pid, "-!-", `${addr} give status code ${res.statusCode}. Not (re)connect with new session again.`);
   });
 
