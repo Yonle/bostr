@@ -324,7 +324,7 @@ function newConn(addr, id, reconn_t = 0) {
         client.events.get(data[1]).add(data[2]?.id);
         client.send(JSON.stringify(data));
 
-        stats[addr].rx++;
+        stats._global.rx++;
         stats[addr].rx++;
 
         // Now count for REQ limit requested by client.
