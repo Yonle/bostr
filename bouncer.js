@@ -20,8 +20,16 @@ const csess = new Map(); // this is used for relays.
 const userRelays = new Map(); // per ID contains Set() of <WebSocket>
 const idleSess = new Set();
 
+let stats = {
+  _global: {
+    rx: 0,
+    tx: 0,
+    f: 0
+  }
+};
+
 // CL - User socket
-module.exports = (ws, req, onClose) => {
+function handleConnection(ws, req, onClose) {
   let query = querystring.parse(req.url.slice(2));
   let authKey = null;
   let authorized = true;
@@ -257,6 +265,7 @@ function getIdleSess(ws) {
 // WS - Sessions
 function newConn(addr, id, reconn_t = 0) {
   if (!csess.has(id)) return;
+  if (!stats[addr]) stats[addr] = { rx: 0, tx: 0, f: 0 };
   const relay = new WebSocket(addr, {
     headers: {
       "User-Agent": `Bostr ${version}; The nostr relay bouncer; https://github.com/Yonle/bostr`,
@@ -315,6 +324,9 @@ function newConn(addr, id, reconn_t = 0) {
         client.events.get(data[1]).add(data[2]?.id);
         client.send(JSON.stringify(data));
 
+        stats[addr].rx++;
+        stats[addr].rx++;
+
         // Now count for REQ limit requested by client.
         // If it's at the limit, Send EOSE to client and delete pendingEOSE of subID
 
@@ -362,6 +374,9 @@ function newConn(addr, id, reconn_t = 0) {
 
         if (log_about_relays) console.log(process.pid, id, addr, data[0], data[1]);
 
+        stats._global.f++
+        stats[addr].f++
+
         break;
 
       case "CLOSED":
@@ -371,8 +386,22 @@ function newConn(addr, id, reconn_t = 0) {
 
         if (log_about_relays) console.log(process.pid, id, addr, data[0], data[1], data[2]);
 
-        if ((data[0] === "CLOSED") && client.pendingEOSE.has(data[1]))
+        if ((data[0]) === "OK") {
+          switch (data[1]) {
+            case true:
+              stats._global.tx++;
+              stats[addr].tx++;
+            case false:
+              stats._global.f++
+              stats[addr].f++
+          }
+        }
+
+        if ((data[0] === "CLOSED") && client.pendingEOSE.has(data[1])) {
+          stats._global.f++
+          stats[addr].f++
           client.pendingEOSE.set(data[1], client.pendingEOSE.get(data[1]) + 1);
+        }
 
         break;
     }
@@ -390,6 +419,9 @@ function newConn(addr, id, reconn_t = 0) {
     setTimeout(_ => {
       newConn(addr, id, reconn_t);
     }, reconn_t);
+
+    stats._global.f++
+    stats[addr].f++
   });
 
   relay.on('unexpected-response', (req, res) => {
@@ -405,4 +437,14 @@ function newConn(addr, id, reconn_t = 0) {
 
 for (let i = 1; i <= (idle_sessions || 1); i++) {
   newsess();
+}
+
+function getStat(n) {
+  if (!n) return stats;
+  return stats[n];
+}
+
+module.exports = {
+  handleConnection,
+  getStat
 }
