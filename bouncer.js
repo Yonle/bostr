@@ -380,27 +380,29 @@ function newConn(addr, id, reconn_t = 0) {
         break;
 
       case "CLOSED":
-      case "OK":
-        if (typeof(data[2]) !== "string") return;
+        if ((typeof(data[1]) !== "string") || (typeof(data[2]) !== "string")) return;
         if (data[2].startsWith("rate-limited")) relay.ratelimit = Date.now();
 
         if (log_about_relays) console.log(process.pid, id, addr, data[0], data[1], data[2]);
 
-        if ((data[0]) === "OK") {
-          switch (data[1]) {
-            case true:
-              stats._global.tx++;
-              stats[addr].tx++;
-            case false:
-              stats._global.f++
-              stats[addr].f++
-          }
-        }
+        stats._global.f++
+        stats[addr].f++
+        if (client.pendingEOSE.has(data[1])) client.pendingEOSE.set(data[1], client.pendingEOSE.get(data[1]) + 1);
+        break;
 
-        if ((data[0] === "CLOSED") && client.pendingEOSE.has(data[1])) {
-          stats._global.f++
-          stats[addr].f++
-          client.pendingEOSE.set(data[1], client.pendingEOSE.get(data[1]) + 1);
+      case "OK":
+        if ((typeof(data[1]) !== "string") || (typeof(data[2]) !== "boolean") || (typeof(data[3]) !== "string")) return;
+        if (data[3].startsWith("rate-limited")) relay.ratelimit = Date.now();
+
+        if (log_about_relays) console.log(process.pid, id, addr, data[0], data[1], data[2], data[3]);
+
+        switch (data[2]) {
+          case true:
+            stats._global.tx++;
+            stats[addr].tx++;
+          case false:
+            stats._global.f++
+            stats[addr].f++
         }
 
         break;
