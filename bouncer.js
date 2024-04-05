@@ -432,6 +432,9 @@ function newConn(addr, id, reconn_t = 0) {
     if (res.statusCode >= 500) return relay.emit("close", null);
     relays = relays.filter(_ => _ != addr);
     console.log(process.pid, "-!-", `${addr} give status code ${res.statusCode}. Not (re)connect with new session again.`);
+
+    stats._global.f++
+    stats[addr].f++
   });
 
   userRelays.get(id).add(relay); // Add this socket session to <client.relays>
