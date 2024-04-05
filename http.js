@@ -71,7 +71,7 @@ server.on('request', (req, res) => {
 
     res.write(`\nI have ${wss.clients.size} clients currently connected to this bouncer${(process.env.CLUSTERS || config.clusters) > 1 ? " on this cluster" : ""}.\n`);
 
-    res.write(`\nBouncer statistics:`);
+    res.write(`\nAll bouncer activities in total:`);
     res.write(`\n- rx: ${globalStat.rx}`);
     res.write(`\n- tx: ${globalStat.tx}`);
     res.write(`\n- fail: ${globalStat.f}`);
