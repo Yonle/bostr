@@ -89,15 +89,15 @@ module.exports = {
     // ....
   ],
 
-  // A whitelist of approved event publishers.
-  // Leaving this empty will allow everyone to publish events with this bouncer.
-  approved_publishers: [
+  // A whitelist of allowed event owner.
+  // Leaving this empty will allow everyone to publish events from anyone to this bouncer.
+  allowed_publishers: [
     // "pubkey-in-hex",
     // "npub ....",
     // ....
   ],
 
-  // A blacklist of blocked event publishers.
+  // A blacklist of blocked event owner.
   blocked_publishers: [
     // "pubkey-in-hex",
     // "npub ....",

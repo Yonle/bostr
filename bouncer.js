@@ -6,15 +6,24 @@ const { validateEvent, nip19, matchFilters, mergeFilters, getFilterLimit } = req
 const auth = require("./auth.js");
 const nip42 = require("./nip42.js");
 
-let { relays, approved_publishers, blocked_publishers, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, max_eose_score, broadcast_ratelimit, upstream_ratelimit_expiration, max_client_subs, idle_sessions, cache_relays, noscraper } = require(process.env.BOSTR_CONFIG_PATH || "./config");
+let { relays, allowed_publishers, approved_publishers, blocked_publishers, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, max_eose_score, broadcast_ratelimit, upstream_ratelimit_expiration, max_client_subs, idle_sessions, cache_relays, noscraper } = require(process.env.BOSTR_CONFIG_PATH || "./config");
 
 log_about_relays = process.env.LOG_ABOUT_RELAYS || log_about_relays;
 authorized_keys = authorized_keys?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
-approved_publishers = approved_publishers?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
+allowed_publishers = allowed_publishers?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
 blocked_publishers = blocked_publishers?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
 
 // CL MaxEoseScore: Set <max_eose_score> as 0 if configured relays is under of the expected number from <max_eose_score>
 if (relays.length < max_eose_score) max_eose_score = 0;
+
+// The following warning will be removed in the next 2 stable release
+if (approved_publishers?.length) {
+  allowed_publishers = approved_publishers?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
+  console.warn(process.pid, "[config]");
+  console.warn(process.pid, "[config]", "!!! Attention !!!");
+  console.warn(process.pid, "[config]", "approved_publishers is deprecated. rename as allowed_publishers");
+  console.warn(process.pid, "[config]");
+}
 
 const csess = new Map(); // this is used for relays.
 const userRelays = new Map(); // per ID contains Set() of <WebSocket>
@@ -88,8 +97,8 @@ function handleConnection(ws, req, onClose) {
         }
 
         if (
-          approved_publishers?.length &&
-          !approved_publishers?.includes(data[1].pubkey)
+          allowed_publishers?.length &&
+          !allowed_publishers?.includes(data[1].pubkey)
         ) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rejected: unauthorized"]));
 
         if (broadcast_ratelimit && (broadcast_ratelimit > (Date.now() - lastEvent))) {
