@@ -65,19 +65,21 @@ server.on('request', (req, res) => {
     });
     res.write("Hello. This nostr bouncer (bostr) is bouncing the following relays:\n\n");
     config.relays.forEach(_ => {
-      const { rx, tx, f } = bouncer.getStat(_);
-      res.write("- " + _ + ` (rx: ${rx}; tx: ${tx}; fail: ${f})` + "\n");
+      const { raw_rx, rx, tx, f } = bouncer.getStat(_);
+      res.write("- " + _ + ` (raw_rx: ${raw_rx}; rx: ${rx}; tx: ${tx}; fail: ${f})` + "\n");
     });
 
     res.write(`\nI have ${wss.clients.size} clients currently connected to this bouncer${(process.env.CLUSTERS || config.clusters) > 1 ? " on this cluster" : ""}.\n`);
 
     res.write(`\nAll bouncer activities in total:`);
+    res.write(`\n- raw_rx: ${globalStat.rx}`);
     res.write(`\n- rx: ${globalStat.rx}`);
     res.write(`\n- tx: ${globalStat.tx}`);
     res.write(`\n- fail: ${globalStat.f}`);
 
     res.write(`\n\nStatistics legends:`);
-    res.write(`\n- rx: received events`);
+    res.write(`\n- raw_rx: received events`);
+    res.write(`\n- rx: received events that has been forwarded to clients`);
     res.write(`\n- tx: succesfully transmitted events`);
     res.write(`\n- fail: failed transmissions or upstream errors\n`);
 

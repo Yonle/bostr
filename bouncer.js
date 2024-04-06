@@ -31,6 +31,7 @@ const idleSess = new Set();
 
 let stats = {
   _global: {
+    raw_rx: 0,
     rx: 0,
     tx: 0,
     f: 0
@@ -274,7 +275,7 @@ function getIdleSess(ws) {
 // WS - Sessions
 function newConn(addr, id, reconn_t = 0) {
   if (!csess.has(id)) return;
-  if (!stats[addr]) stats[addr] = { rx: 0, tx: 0, f: 0 };
+  if (!stats[addr]) stats[addr] = { raw_rx: 0, rx: 0, tx: 0, f: 0 };
   const relay = new WebSocket(addr, {
     headers: {
       "User-Agent": `Bostr ${version}; The nostr relay bouncer; https://github.com/Yonle/bostr`,
@@ -313,6 +314,8 @@ function newConn(addr, id, reconn_t = 0) {
 
     switch (data[0]) {
       case "EVENT": {
+        stats._global.raw_rx++;
+        stats[addr].raw_rx++;
         if (data.length < 3 || typeof(data[1]) !== "string" || typeof(data[2]) !== "object") return;
         if (!client.subalias.has(data[1])) return;
         data[1] = client.subalias.get(data[1]);
