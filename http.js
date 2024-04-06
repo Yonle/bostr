@@ -78,9 +78,9 @@ server.on('request', (req, res) => {
     res.write(`\n- fail: ${globalStat.f}`);
 
     res.write(`\n\nStatistics legends:`);
-    res.write(`\n- raw_rx: received events`);
-    res.write(`\n- rx: received events that has been forwarded to clients`);
-    res.write(`\n- tx: succesfully transmitted events`);
+    res.write(`\n- raw_rx: received events from upstream relays`);
+    res.write(`\n- rx: received events from upstream relays that has been forwarded to clients`);
+    res.write(`\n- tx: succesfully transmitted events that has been forwarded to upstream relays`);
     res.write(`\n- fail: failed transmissions or upstream errors\n`);
 
     if (config?.authorized_keys?.length) res.write("\nNOTE: This relay has configured for personal use only. Only authorized users could use this bostr relay.\n");
