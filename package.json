@@ -1,6 +1,6 @@
 {
   "name": "bostr",
-  "version": "2.1.5-dev",
+  "version": "2.1.5",
   "description": "Nostr relay bouncer",
   "main": "index.js",
   "scripts": {
@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/Yonle/bostr#readme",
   "dependencies": {
-    "nostr-tools": "^2.3.2",
+    "nostr-tools": "^2.4.0",
     "ws": "^8.16.0"
   },
   "engines": {
