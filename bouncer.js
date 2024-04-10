@@ -397,8 +397,10 @@ function newConn(addr, id, reconn_t = 0) {
 
         if (log_about_relays) console.log(process.pid, id, addr, data[0], data[1], data[2]);
 
-        stats._global.f++
-        stats[addr].f++
+        if (data[2].length) {
+          stats._global.f++;
+          stats[addr].f++;
+        }
         if (client.pendingEOSE.has(data[1])) client.pendingEOSE.set(data[1], client.pendingEOSE.get(data[1]) + 1);
         break;
 
