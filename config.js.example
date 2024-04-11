@@ -61,7 +61,7 @@ module.exports = {
   // This is also known as save mode.
   //
   // You may also need to adjust <max_eose_score>.
-  pause_on_limit: true,
+  pause_on_limit: false,
 
   // Maximum of received EOSE from relays to send EOSE to client.
   // Normally, waiting EOSE from 3 relays should be enough. Leaving it with 0 equals wait for every established relays.
