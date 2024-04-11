@@ -35,7 +35,7 @@ module.exports = {
   //
   // NOTE: - Require NIP-42 compatible nostr client.
   //       - This will also block unauthorized EVENT.
-  noscraper: true,
+  noscraper: false,
 
   // Time before reconnect to relays in milliseconds.
   reconnect_time: 5000,
