@@ -272,6 +272,15 @@ function getIdleSess(ws) {
   newsess();
 }
 
+function _matchFilters(filters, event) {
+  // nostr-tools being randomly throw error in their own code. Put safety.
+  try {
+    return matchFilters(filters, event);
+  } catch {
+    return false;
+  }
+}
+
 // WS - Sessions
 function newConn(addr, id, reconn_t = 0) {
   if (!csess.has(id)) return;
@@ -328,7 +337,7 @@ function newConn(addr, id, reconn_t = 0) {
         if (client.rejectKinds && client.rejectKinds.includes(data[2]?.id)) return;
 
         const filters = client.subs.get(data[1]);
-        if (!matchFilters(filters, data[2])) return;
+        if (!_matchFilters(filters, data[2])) return;
 
         const NotInSearchQuery = "search" in filter && !data[2]?.content?.toLowerCase().includes(filter.search.toLowerCase());
         if (NotInSearchQuery) return;
