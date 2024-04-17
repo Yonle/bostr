@@ -32,7 +32,7 @@ or via git:
 npm install -g https://github.com/Yonle/bostr.git
 ```
 
-You will then need to make config with the following command:
+You will need to make config with the following command:
 ```
 bostr makeconf bostr_config.js
 ```
@@ -83,7 +83,7 @@ cd bostr
 cp config.js.example config.js
 ```
 
-You will then need to edit `config.js` before running the bouncer.
+You will need to edit `config.js` before running the bouncer.
 
 Then, you will need to edit `compose.yaml` to override the forwarded port to match with the one in `config.js`.
 
