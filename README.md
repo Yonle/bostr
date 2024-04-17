@@ -85,6 +85,8 @@ cp config.js.example config.js
 
 You will then need to edit `config.js` before running the bouncer.
 
+Then, you will need to edit `compose.yaml` to override the forwarded port to match with the one in `config.js`.
+
 #### Running
 ```
 docker build -t bostr:local .
