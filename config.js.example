@@ -28,7 +28,9 @@ module.exports = {
   log_about_relays: false,
 
   // Use deflate compression for websocket.
-  perMessageDeflate: true,
+  // Enabling this will save user bandwidth,
+  // But also will be CPU intensive if there's a lot of users using this bouncer
+  perMessageDeflate: false,
 
   // Reject scraper requests.
   // This only checks whenever client respond to bouncer's AUTH.
