@@ -159,6 +159,8 @@ module.exports = {
     // "wss://example3.com",
     // ...and so on
   ],
+  // Unless you use this bouncer only for load balancing,
+  // You could empty <relays> as long <loadbalancer> is not empty.
 
   // Cache relays - Store received events to cache relay(s) (Optional).
   // Could improve the speed of event deliveries.
@@ -169,5 +171,16 @@ module.exports = {
   //          - Things may not work properly if you configure more than just a single cache relays.
   cache_relays: [
     // "ws://localhost:3000"
+  ],
+
+  // Load balancer - Load balance this bouncer (Optional)
+  //
+  // You could make this bouncer to connect to other bouncer in order to save this server loads.
+  // It's suggested that the following bouncers does not have `noscraper` or `authorized_keys` being set.
+  loadbalancer: [
+    // "wss://bostr1.example.com",
+    // "wss://bostr2.example.com",
+    // "wss://bostr3.example.com",
+    // ...and so on
   ]
 }
