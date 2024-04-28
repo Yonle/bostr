@@ -202,10 +202,18 @@ function handleConnection(ws, req, onClose) {
         ws.send(JSON.stringify(["CLOSED", origID, ""]));
         break;
       case "AUTH":
-        if (authorized) return;
         if (auth(authKey, data[1], ws, req)) {
+          authKey = Date.now() + Math.random().toString(36);
           ws.pubkey = data[1].pubkey;
           console.log(process.pid, "---", ws.ip, "successfully authorized as", ws.pubkey, private_keys[ws.pubkey] ? "(admin)" : "(user)");
+          if (private_keys[ws.pubkey]) {
+            for (const relay of userRelays.get(ws.id)) {
+              for (const challenge of relay.pendingNIP42) {
+                nip42(relay, client.pubkey, private_keys[ws.pubkey], challenge);
+                relay.pendingNIP42.delete(challenge);
+              }
+            }
+          }
           if (authorized) return;
           authorized = true;
           lastEvent = Date.now();
@@ -323,6 +331,7 @@ function newConn(addr, id, reconn_t = 0) {
   relay.isCache = relay_type(addr) === "cache_relay";
   relay.isLoadBalancer = relay_type(addr) === "loadbalancer";
   relay.ratelimit = 0;
+  relay.pendingNIP42 = new Set();
   relay.on('open', _ => {
     if (!csess.has(id)) return relay.terminate();
     const client = csess.get(id);
@@ -414,7 +423,7 @@ function newConn(addr, id, reconn_t = 0) {
         }
         break;
       case "AUTH":
-        if (!private_keys || typeof(data[1]) !== "string" || !client.pubkey) return;
+        if (!private_keys || typeof(data[1]) !== "string" || !client.pubkey) return relay.pendingNIP42.add(data[1]);
         nip42(relay, client.pubkey, private_keys[client.pubkey], data[1]);
         break;
 

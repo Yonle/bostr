@@ -3,12 +3,13 @@ const { validateEvent, verifyEvent } = require("nostr-tools");
 const { authorized_keys, private_keys } = require(process.env.BOSTR_CONFIG_PATH || "./config");
 
 module.exports = (authKey, data, ws, req) => {
+  if (!(authorized_keys?.length || Object.keys(private_keys).length)) return; // do nothing
   if (!validateEvent(data) || !verifyEvent(data)) {
     ws.send(JSON.stringify(["NOTICE", "error: invalid challenge response."]));
     return false;
   }
 
-  if ((authorized_keys?.length || Object.keys(private_keys).length) && !authorized_keys?.includes(data.pubkey) && !(private_keys && private_keys[data.pubkey])) {
+  if (!authorized_keys?.includes(data.pubkey) && !private_keys[data.pubkey]) {
     ws.send(JSON.stringify(["OK", data.id, false, "unauthorized."]));
     return false;
   }
@@ -18,14 +19,14 @@ module.exports = (authKey, data, ws, req) => {
     return false;
   }
 
-  const tags = new Map(data.tags);
+  const tags = Object.fromEntries(data.tags);
 
-  if (!tags.get("relay").includes(req.headers.host)) {
+  if (!tags.relay?.includes(req.headers.host)) {
     ws.send(JSON.stringify(["OK", data.id, false, "unmatched relay url."]));
     return false;
   };
 
-  if (tags.get("challenge") !== authKey) {
+  if (tags.challenge !== authKey) {
     ws.send(JSON.stringify(["OK", data.id, false, "unmatched challenge string."]));
     return false;
   }
