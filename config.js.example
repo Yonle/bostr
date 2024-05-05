@@ -18,7 +18,7 @@ module.exports = {
 
   // Clusters.
   // 0 will make bostr run clusters with available parallelism / CPU cores.
-  clusters: 1,
+  clusters: 0,
 
   // Numbers of idle sessions to be created
   // Default: 1
