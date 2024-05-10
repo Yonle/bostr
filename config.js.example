@@ -16,8 +16,7 @@ module.exports = {
     ticketKey: ""
   },
 
-  // Clusters.
-  // 0 will make bostr run clusters with available parallelism / CPU cores.
+  // Clusters (default: 1)
   //
   // Every single clusters has additional 1 running worker,
   // Which making bostr running at 2 threads by default.
@@ -25,8 +24,8 @@ module.exports = {
   // You may increase this value if:
   // - You want to use more threads/cores in your server
   // - You got heavy traffics / many clients
-  // By default, 0 (auto) will determine based of how many parallelism / cores available in the system.
-  clusters: 0,
+  // 0 (auto) will determine based of how many parallelism / cores available in the system.
+  clusters: 1,
 
   // Numbers of idle sessions to be created
   // Default: 1
