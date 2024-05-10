@@ -1,9 +1,9 @@
 "use strict";
 const { validateEvent, verifyEvent } = require("nostr-tools");
-const { authorized_keys, private_keys } = require(process.env.BOSTR_CONFIG_PATH || "./config");
+const { authorized_keys, private_keys, noscraper } = require(process.env.BOSTR_CONFIG_PATH || "./config");
 
 module.exports = (authKey, data, ws, req) => {
-  if (!(authorized_keys?.length || Object.keys(private_keys).length)) return; // do nothing
+  if (!authorized_keys?.length && !Object.keys(private_keys).length && !noscraper) return; // do nothing
   if (!validateEvent(data) || !verifyEvent(data)) {
     ws.send(JSON.stringify(["NOTICE", "error: invalid challenge response."]));
     return false;
