@@ -31,7 +31,7 @@ if (approved_publishers?.length) {
 
 const worker = new Worker(__dirname + "/worker_bouncer.js", { name: "Bostr (worker)" });
 
-const csess = new Map(); // this is used for relays.
+const csess = {}; // this is used for relays.
 const userRelays = new Map(); // per ID contains Set() of <WebSocket>
 const ident = new Map();
 
@@ -167,7 +167,7 @@ function handleConnection(ws, req, onClose) {
 
     if (!sessStarted) return;
     _destroy(ws.id);
-    csess.delete(ws.id);
+    delete csess[ws.id];
   });
 }
 
@@ -178,13 +178,13 @@ function handleWorker(msg) {
       const ws = ident.get(msg.ident);
       ws.id = msg.id;
       ws.onready();
-      csess.set(msg.id, ws);
+      csess[msg.id] = ws;
       ident.delete(msg.ident);
       break;
     }
     case "upstream_msg":
-      if (!csess.has(msg.id)) return;
-      csess.get(msg.id).send(msg.data);
+      if (!csess.hasOwnProperty(msg.id)) return;
+      csess[msg.id].send(msg.data);
       break;
     case "stats":
       stats = msg.data;

@@ -17,8 +17,8 @@ if (relays.length) loadbalancer.unshift("_me");
 // CL MaxEoseScore: Set <max_eose_score> as 0 if configured relays is under of the expected number from <max_eose_score>
 if (relays.length < max_eose_score) max_eose_score = 0;
 
-const csess = new Map(); // this is used for relays.
-const userRelays = new Map(); // per ID contains Set() of <WebSocket>
+const csess = {}; // this is used for relays.
+const userRelays = {}; // per ID contains Set() of <WebSocket>
 const idleSess = new Set();
 
 let stats = {
@@ -37,25 +37,25 @@ parentPort.on('message', m => {
       getIdleSess(m.ident, m.data);
       break;
     case "req": {
-      if (!csess.has(m.id)) return;
-      const ws = csess.get(m.id);
+      if (!csess.hasOwnProperty(m.id)) return;
+      const ws = csess[m.id];
 
-      if ((max_client_subs !== -1) && (ws.subs.size > max_client_subs))
+      if ((max_client_subs !== -1) && (Object.keys(ws.subs).length > max_client_subs))
         return parentPort.postMessage({
           type: "upstream_msg",
           id: m.id,
           data: JSON.stringify(["CLOSED", data[1], "rate-limited: too many subscriptions."])
         });
       const origID = m.sid;
-      if (ws.fakesubalias.has(origID)) {
-        const faked = ws.fakesubalias.get(origID);
-        ws.subs.delete(origID);
-        ws.events.delete(origID);
-        ws.pendingEOSE.delete(origID);
+      if (ws.fakesubalias.hasOwnProperty(origID)) {
+        const faked = ws.fakesubalias[origID];
+        delete ws.subs[origID];
+        delete ws.events[origID];
+        delete ws.pendingEOSE[origID];
         ws.pause_subs.delete(origID);
-        ws.fakesubalias.delete(origID);
-        ws.subalias.delete(faked);
-        ws.mergedFilters.delete(origID);
+        delete ws.fakesubalias[origID];
+        delete ws.subalias[faked];
+        delete ws.mergedFilters[origID];
         bc(["CLOSE", faked], m.id);
       };
 
@@ -79,36 +79,36 @@ parentPort.on('message', m => {
           filters[fn].limit = ws.forcedLimit;
       }
 
-      ws.subs.set(origID, filters);
-      ws.events.set(origID, new Set());
+      ws.subs[origID] = filters;
+      ws.events[origID] = new Set();
       ws.pause_subs.delete(origID);
-      ws.subalias.set(faked, origID);
-      ws.fakesubalias.set(origID, faked);
+      ws.subalias[faked] = origID;
+      ws.fakesubalias[origID] = faked;
       if (!filter.since) filter.since = Math.floor(Date.now() / 1000); // Will not impact everything. Only used for handling passing pause_on_limit (or save mode)
-      ws.mergedFilters.set(origID, filter);
+      ws.mergedFilters[origID] = filter;
       bc(["REQ", faked, ...filters], m.id);
       if (filter.limit < 1) return parentPort.postMessage({
         type: "upstream_msg",
         id: m.id,
         data: JSON.stringify(["EOSE", origID])
       });
-      ws.pendingEOSE.set(origID, 0);
+      ws.pendingEOSE[origID] = 0;
       break;
     }
     case "close": {
-      if (!csess.has(m.id)) return;
-      const ws = csess.get(m.id);
-      if (!ws.fakesubalias.has(m.sid)) return;
+      if (!csess.hasOwnProperty(m.id)) return;
+      const ws = csess[m.id];
+      if (!ws.fakesubalias.hasOwnProperty(m.sid)) return;
 
       const origID = m.sid;
-      const faked = ws.fakesubalias.get(origID);
-      ws.subs.delete(origID);
-      ws.events.delete(origID);
-      ws.pendingEOSE.delete(origID);
+      const faked = ws.fakesubalias[origID];
+      delete ws.subs[origID];
+      delete ws.events[origID];
+      delete ws.pendingEOSE[origID];
       ws.pause_subs.delete(origID);
-      ws.fakesubalias.delete(origID);
-      ws.subalias.delete(faked);
-      ws.mergedFilters.delete(origID);
+      delete ws.fakesubalias[origID];
+      delete ws.subalias[faked];
+      delete ws.mergedFilters[origID];
 
       bc(["CLOSE", faked], m.id);
       parentPort.postMessage({
@@ -119,8 +119,8 @@ parentPort.on('message', m => {
       break;
     }
     case "event": {
-      if (!csess.has(m.id)) return;
-      const ws = csess.get(m.id);
+      if (!csess.hasOwnProperty(m.id)) return;
+      const ws = csess[m.id];
 
       ws.my_events.add(m.event.id);
 
@@ -133,20 +133,20 @@ parentPort.on('message', m => {
       break;
     }
     case "destroy":
-      if (!csess.has(m.id)) return;
+      if (!csess.hasOwnProperty(m.id)) return;
 
-      for (const sock of userRelays.get(m.id)) {
+      for (const sock of userRelays[m.id]) {
         sock.terminate();
       }
 
-      userRelays.delete(m.id);
-      csess.delete(m.id);
+      delete userRelays[m.id];
+      delete csess[m.id];
       break;
     case "auth":
-      if (!csess.has(m.id)) return;
-      csess.get(m.id).pubkey = m.pubkey;
+      if (!csess.hasOwnProperty(m.id)) return;
+      csess[m.id].pubkey = m.pubkey;
       if (m.pubkey && private_keys[m.pubkey]) {
-        for (const relay of userRelays.get(m.id)) {
+        for (const relay of userRelays[m.id]) {
           for (const challenge of relay.pendingNIP42) {
             nip42(relay, m.pubkey, private_keys[m.pubkey], challenge);
             relay.pendingNIP42.delete(challenge);
@@ -170,8 +170,8 @@ function newsess() {
   const shift = loadbalancer.shift();
   loadbalancer.push(shift);
 
-  userRelays.set(id, new Set());
-  csess.set(id, null);
+  userRelays[id] = new Set();
+  csess[id] = null;
   idleSess.add(id);
 
   if (cache_relays) {
@@ -195,7 +195,7 @@ function newsess() {
 // WS - Broadcast message to every existing sockets
 function bc(msg, id, toCacheOnly) {
   if (toCacheOnly && !cache_relays?.length) return;
-  for (const relay of userRelays.get(id)) {
+  for (const relay of userRelays[id]) {
     if (relay.readyState !== 1) continue;
     if (toCacheOnly && !relay.isCache) continue;
 
@@ -208,15 +208,15 @@ function bc(msg, id, toCacheOnly) {
 
 function getIdleSess(ident, infos) {
   const ws = {};
-  ws.subs = new Map(); // contains filter submitted by clients. per subID
+  ws.subs = {}; // contains filter submitted by clients. per subID
   ws.pause_subs = new Set(); // pause subscriptions from receiving events after reached over <filter.limit> until all relays send EOSE. per subID
-  ws.events = new Map(); // only to prevent the retransmit of the same event. per subID
+  ws.events = {}; // only to prevent the retransmit of the same event. per subID
   ws.my_events = new Set(); // for event retransmitting.
-  ws.pendingEOSE = new Map(); // each contain subID
+  ws.pendingEOSE = {}; // each contain subID
   ws.reconnectTimeout = new Set(); // relays timeout() before reconnection. Only use after client disconnected.
-  ws.subalias = new Map();
-  ws.fakesubalias = new Map();
-  ws.mergedFilters = new Map();
+  ws.subalias = {};
+  ws.fakesubalias = {};
+  ws.mergedFilters = {};
 
   // handled in bouncer.js
   ws.ip = null;
@@ -232,7 +232,7 @@ function getIdleSess(ident, infos) {
   }
 
   if (ws.pubkey && private_keys[ws.pubkey]) {
-    for (const relay of userRelays.get(ws.id)) {
+    for (const relay of userRelays[ws.id]) {
       for (const challenge of relay.pendingNIP42) {
         nip42(relay, ws.pubkey, private_keys[ws.pubkey], challenge);
         relay.pendingNIP42.delete(challenge);
@@ -242,7 +242,7 @@ function getIdleSess(ident, infos) {
 
   ws.id = idleSess.values().next().value;
   idleSess.delete(ws.id);
-  csess.set(ws.id, ws);
+  csess[ws.id] = ws;
 
   parentPort.postMessage({
     type: "sessreg",
@@ -280,7 +280,7 @@ function relay_type(addr) {
 
 // WS - Sessions
 function newConn(addr, id, reconn_t = 0) {
-  if (!csess.has(id)) return;
+  if (!csess.hasOwnProperty(id)) return;
   if (!stats[addr]) stats[addr] = { raw_rx: 0, rx: 0, tx: 0, f: 0 };
   const relay = new WebSocket(addr, {
     headers: {
@@ -295,8 +295,8 @@ function newConn(addr, id, reconn_t = 0) {
   relay.ratelimit = 0;
   relay.pendingNIP42 = new Set();
   relay.on('open', _ => {
-    if (!csess.has(id)) return relay.terminate();
-    const client = csess.get(id);
+    if (!csess.hasOwnProperty(id)) return relay.terminate();
+    const client = csess[id];
     reconn_t = 0;
     if (log_about_relays) console.log(threadId, "---", id, "Connected to", addr, `(${relay_type(addr)})`);
 
@@ -305,19 +305,19 @@ function newConn(addr, id, reconn_t = 0) {
       relay.send(JSON.stringify(["EVENT", i]));
     }
 
-    for (const i of client.subs) {
-      relay.send(JSON.stringify(["REQ", client.fakesubalias.get(i[0]), ...i[1]]));
+    for (const i in client.subs) {
+      relay.send(JSON.stringify(["REQ", client.fakesubalias[i], ...client.subs[i]]));
     }
   });
 
   relay.on('message', data => {
-    if (!csess.has(id)) return relay.terminate();
+    if (!csess.hasOwnProperty(id)) return relay.terminate();
     try {
       data = JSON.parse(data);
     } catch (error) {
       return;
     }
-    const client = csess.get(id);
+    const client = csess[id];
     if (!client) return;
 
     switch (data[0]) {
@@ -325,23 +325,23 @@ function newConn(addr, id, reconn_t = 0) {
         stats._global.raw_rx++;
         stats[addr].raw_rx++;
         if (data.length < 3 || typeof(data[1]) !== "string" || typeof(data[2]) !== "object") return;
-        if (!client.subalias.has(data[1])) return;
-        data[1] = client.subalias.get(data[1]);
+        if (!client.subalias.hasOwnProperty(data[1])) return;
+        data[1] = client.subalias[data[1]];
 
-        if (client.events.get(data[1]).has(data[2]?.id)) return; // No need to transmit once it has been transmitted before.
+        if (client.events[data[1]].hasOwnProperty(data[2]?.id)) return; // No need to transmit once it has been transmitted before.
         if (!relay.isCache) bc(["EVENT", data[2]], id, true); // store to cache relay
-        const filter = client.mergedFilters.get(data[1]);
+        const filter = client.mergedFilters[data[1]];
         if (client.pause_subs.has(data[1]) && (filter.since > data[2].created_at) && !relay.isCache) return;
 
         if (client.rejectKinds && client.rejectKinds.includes(data[2]?.id)) return;
 
-        const filters = client.subs.get(data[1]);
+        const filters = client.subs[data[1]];
         if (!_matchFilters(filters, data[2])) return;
 
         const NotInSearchQuery = "search" in filter && !data[2]?.content?.toLowerCase().includes(filter.search.toLowerCase());
         if (NotInSearchQuery) return;
 
-        if (!relay.isLoadBalancer) client.events.get(data[1]).add(data[2]?.id);
+        if (!relay.isLoadBalancer) client.events[data[1]].add(data[2]?.id);
         parentPort.postMessage({ type: "upstream_msg", id, data: JSON.stringify(data) });
 
         stats._global.rx++;
@@ -351,32 +351,32 @@ function newConn(addr, id, reconn_t = 0) {
         // If it's at the limit, Send EOSE to client and delete pendingEOSE of subID
 
         // Skip if EOSE has been omitted
-        if (!client.pendingEOSE.has(data[1]) || client.pause_subs.has(data[1]) || relay.isLoadBalancer) return;
+        if (!client.pendingEOSE.hasOwnProperty(data[1]) || client.pause_subs.has(data[1]) || relay.isLoadBalancer) return;
         const limit = getFilterLimit(filter);
         if (limit === Infinity) return;
-        if (client.events.get(data[1]).size >= limit) {
+        if (client.events[data[1]].size >= limit) {
           // Once reached to <filter.limit>, send EOSE to client.
           parentPort.postMessage({ type: "upstream_msg", id, data: JSON.stringify(["EOSE", data[1]]) });
 
           if (!client.accurateMode && (client.saveMode || pause_on_limit)) {
             client.pause_subs.add(data[1]);
           } else {
-            client.pendingEOSE.delete(data[1]);
+            delete client.pendingEOSE[data[1]];
           }
         }
         break;
       }
       case "EOSE":
-        if (!client.subalias.has(data[1])) return;
-        data[1] = client.subalias.get(data[1]);
-        if (!client.pendingEOSE.has(data[1]) && !relay.isLoadBalancer) return;
-        client.pendingEOSE.set(data[1], client.pendingEOSE.get(data[1]) + 1);
+        if (!client.subalias.hasOwnProperty(data[1])) return;
+        data[1] = client.subalias[data[1]];
+        if (!client.pendingEOSE.hasOwnProperty(data[1]) && !relay.isLoadBalancer) return;
+        client.pendingEOSE[data[1]]++;
 
-        if (log_about_relays) console.log(threadId, "---", id, `got EOSE from ${addr} for ${data[1]}. There are ${client.pendingEOSE.get(data[1])} EOSE received out of ${userRelays.get(id).size} connected relays.`);
+        if (log_about_relays) console.log(threadId, "---", id, `got EOSE from ${addr} for ${data[1]}. There are ${client.pendingEOSE[data[1]]} EOSE received out of ${userRelays[id].size} connected relays.`);
 
-        if (!relay.isCache && (wait_eose && ((client.pendingEOSE.get(data[1]) < max_eose_score) || (client.pendingEOSE.get(data[1]) < userRelays.get(id).size)))) return;
-        if (relay.isCache && !client.events.get(data[1]).size) return; // if cache relays did not send anything but EOSE, Don't send EOSE yet.
-        client.pendingEOSE.delete(data[1]);
+        if (!relay.isCache && (wait_eose && ((client.pendingEOSE[data[1]] < max_eose_score) || (client.pendingEOSE[data[1]] < userRelays[id].size)))) return;
+        if (relay.isCache && !client.events[data[1]].size) return; // if cache relays did not send anything but EOSE, Don't send EOSE yet.
+        delete client.pendingEOSE[data[1]];
 
         if (client.pause_subs.has(data[1]) && !relay.isLoadBalancer) {
           client.pause_subs.delete(data[1]);
@@ -410,7 +410,7 @@ function newConn(addr, id, reconn_t = 0) {
           stats._global.f++;
           stats[addr].f++;
         }
-        if (client.pendingEOSE.has(data[1])) client.pendingEOSE.set(data[1], client.pendingEOSE.get(data[1]) + 1);
+        if (client.pendingEOSE.hasOwnProperty(data[1])) client.pendingEOSE[data[1]]++;
         break;
 
       case "OK":
@@ -437,8 +437,8 @@ function newConn(addr, id, reconn_t = 0) {
   });
 
   relay.on('close', _ => {
-    if (!userRelays.has(id)) return;
-    userRelays.get(id).delete(relay); // Remove this socket session from <client.relays> list
+    if (!userRelays.hasOwnProperty(id)) return;
+    userRelays[id].delete(relay); // Remove this socket session from <client.relays> list
     if (log_about_relays) console.log(threadId, "-!-", id, "Disconnected from", addr, `(${relay_type(addr)})`);
     reconn_t += reconnect_time || 5000
     setTimeout(_ => {
@@ -450,8 +450,8 @@ function newConn(addr, id, reconn_t = 0) {
   });
 
   relay.on('unexpected-response', (req, res) => {
-    if (!userRelays.has(id)) return;
-    userRelays.get(id).delete(relay);
+    if (!userRelays.hasOwnProperty(id)) return;
+    userRelays[id].delete(relay);
     if (res.statusCode >= 500) return relay.emit("close", null);
     relays = relays.filter(_ => _ != addr);
     console.log(threadId, "-!-", `${addr} give status code ${res.statusCode}. Not (re)connect with new session again.`);
@@ -460,7 +460,7 @@ function newConn(addr, id, reconn_t = 0) {
     stats[addr].f++
   });
 
-  userRelays.get(id).add(relay); // Add this socket session to <client.relays>
+  userRelays[id].add(relay); // Add this socket session to <client.relays>
 }
 
 for (let i = 1; i <= (idle_sessions || 1); i++) {
