@@ -9,7 +9,7 @@ module.exports = (authKey, data, ws, req) => {
     return false;
   }
 
-  if (!authorized_keys?.includes(data.pubkey) && !private_keys[data.pubkey]) {
+  if (!authorized_keys?.includes(data.pubkey) && !private_keys[data.pubkey] && !noscraper) {
     ws.send(JSON.stringify(["OK", data.id, false, "unauthorized."]));
     return false;
   }
