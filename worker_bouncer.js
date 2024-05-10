@@ -122,8 +122,6 @@ parentPort.on('message', m => {
       if (!csess.hasOwnProperty(m.id)) return;
       const ws = csess[m.id];
 
-      ws.my_events.add(m.event.id);
-
       bc(["EVENT", m.event], m.id);
       parentPort.postMessage({
         type: "upstream_msg",
@@ -211,7 +209,6 @@ function getIdleSess(ident, infos) {
   ws.subs = {}; // contains filter submitted by clients. per subID
   ws.pause_subs = new Set(); // pause subscriptions from receiving events after reached over <filter.limit> until all relays send EOSE. per subID
   ws.events = {}; // only to prevent the retransmit of the same event. per subID
-  ws.my_events = new Set(); // for event retransmitting.
   ws.pendingEOSE = {}; // each contain subID
   ws.reconnectTimeout = new Set(); // relays timeout() before reconnection. Only use after client disconnected.
   ws.subalias = {};
@@ -301,9 +298,6 @@ function newConn(addr, id, reconn_t = 0) {
     if (log_about_relays) console.log(threadId, "---", id, "Connected to", addr, `(${relay_type(addr)})`);
 
     if (!client) return;
-    for (const i of client.my_events) {
-      relay.send(JSON.stringify(["EVENT", i]));
-    }
 
     for (const i in client.subs) {
       relay.send(JSON.stringify(["REQ", client.fakesubalias[i], ...client.subs[i]]));
