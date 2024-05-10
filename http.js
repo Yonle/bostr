@@ -1,4 +1,7 @@
 "use strict";
+
+process.title = "Bostr (cluster)";
+
 const { version } = require("./package.json");
 const WebSocket = require("ws");
 const http = require("http");
