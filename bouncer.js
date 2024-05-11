@@ -150,7 +150,7 @@ function handleConnection(ws, req) {
     console.log(process.pid, "---", `${ws.ip} disconnected`);
 
     if (!sessStarted) return;
-    _destroy(ws.id);
+    _destroy(ws.id, ws.ident);
     delete csess[ws.id];
   });
 }
@@ -217,10 +217,11 @@ function _auth(id, pubkey) {
   });
 }
 
-function _destroy(id) {
+function _destroy(id, ident) {
   worker.postMessage({
     type: "destroy",
-    id
+    id,
+    ident
   });
 }
 
