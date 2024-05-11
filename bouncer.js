@@ -43,7 +43,7 @@ function handleConnection(ws, req) {
   let authorized = true;
   let sessStarted = false;
 
-  ws.onready = null;
+  ws.onready = new Set();
   ws.ident = Date.now() + Math.random().toString(36);
   ws.id = null;
   ws.ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address;
@@ -154,14 +154,21 @@ function handleConnection(ws, req) {
   });
 }
 
+function resolveClient(ws) {
+  for (const resolve of ws.onready) {
+    ws.onready.delete(resolve);
+    resolve();
+  }
+}
+
 function handleWorker(msg) {
   switch (msg.type) {
     case "sessreg": {
       if (!idents.hasOwnProperty(msg.ident)) return _destroy(msg.id);
       const ws = idents[msg.ident];
-      if (ws.id === msg.id) return ws.onready(); // if existing is the same as the current one, just poke ready.
+      if (ws.id === msg.id) return resolveClient(ws); // if existing is the same as the current one, just poke ready.
       ws.id = msg.id;
-      ws.onready();
+      resolveClient(ws);
       csess[msg.id] = ws;
       break;
     }
@@ -233,7 +240,7 @@ function getIdleSess(ws) {
     data
   });
 
-  return new Promise(resolve => ws.onready = resolve);
+  return new Promise(resolve => ws.onready.add(resolve));
 }
 
 worker.on("message", handleWorker);
