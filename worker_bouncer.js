@@ -7,7 +7,7 @@ const WebSocket = require("ws");
 const { validateEvent, nip19, matchFilters, mergeFilters, getFilterLimit } = require("nostr-tools");
 const nip42 = require("./nip42.js");
 
-let { relays, allowed_publishers, approved_publishers, blocked_publishers, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, max_eose_score, broadcast_ratelimit, upstream_ratelimit_expiration, max_client_subs, idle_sessions, cache_relays, noscraper, loadbalancer } = require(process.env.BOSTR_CONFIG_PATH || "./config");
+let { relays, log_about_relays, private_keys, reconnect_time, wait_eose, pause_on_limit, max_eose_score, upstream_ratelimit_expiration, max_client_subs, idle_sessions, cache_relays, loadbalancer } = require(process.env.BOSTR_CONFIG_PATH || "./config");
 
 log_about_relays = process.env.LOG_ABOUT_RELAYS || log_about_relays;
 
@@ -305,7 +305,6 @@ function newConn(addr, id, reconn_t = 0) {
   });
 
   relay.on('message', data => {
-    if (!csess.hasOwnProperty(id)) return relay.terminate();
     try {
       data = JSON.parse(data);
     } catch (error) {

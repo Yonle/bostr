@@ -4,21 +4,15 @@
 const { Worker } = require("worker_threads");
 const { version } = require("./package.json");
 const querystring = require("querystring");
-const { validateEvent, nip19, matchFilters, mergeFilters, getFilterLimit } = require("nostr-tools");
+const { validateEvent, nip19 } = require("nostr-tools");
 const auth = require("./auth.js");
 
-let { relays, allowed_publishers, approved_publishers, blocked_publishers, log_about_relays, authorized_keys, private_keys, reconnect_time, wait_eose, pause_on_limit, max_eose_score, broadcast_ratelimit, upstream_ratelimit_expiration, max_client_subs, idle_sessions, cache_relays, noscraper, loadbalancer } = require(process.env.BOSTR_CONFIG_PATH || "./config");
+let { allowed_publishers, approved_publishers, blocked_publishers, log_about_relays, authorized_keys, private_keys, noscraper } = require(process.env.BOSTR_CONFIG_PATH || "./config");
 
 log_about_relays = process.env.LOG_ABOUT_RELAYS || log_about_relays;
 authorized_keys = authorized_keys?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
 allowed_publishers = allowed_publishers?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
 blocked_publishers = blocked_publishers?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
-
-loadbalancer = loadbalancer || [];
-if (relays.length) loadbalancer.unshift("_me");
-
-// CL MaxEoseScore: Set <max_eose_score> as 0 if configured relays is under of the expected number from <max_eose_score>
-if (relays.length < max_eose_score) max_eose_score = 0;
 
 // The following warning will be removed in the next 2 stable release
 if (approved_publishers?.length) {
@@ -32,8 +26,7 @@ if (approved_publishers?.length) {
 const worker = new Worker(__dirname + "/worker_bouncer.js", { name: "Bostr (worker)" });
 
 const csess = {}; // this is used for relays.
-const userRelays = new Map(); // per ID contains Set() of <WebSocket>
-const ident = new Map();
+const ident = {};
 
 let zeroStats = {
   raw_rx: 0,
@@ -44,12 +37,12 @@ let zeroStats = {
 let stats = {};
 
 // CL - User socket
-function handleConnection(ws, req, onClose) {
+function handleConnection(ws, req) {
   let query = querystring.parse(req.url.slice(2));
   let authKey = null;
   let authorized = true;
   let sessStarted = false;
-  let lastEvent = Date.now();
+
   ws.onready = null;
   ws.ident = Date.now() + Math.random().toString(36);
   ws.id = null;
@@ -61,7 +54,7 @@ function handleConnection(ws, req, onClose) {
   ws.accurateMode = parseInt(query.accurate);
   ws.saveMode = parseInt(query.save);
 
-  ident.set(ws.ident, ws);
+  ident[ws.ident] = ws;
 
   if (noscraper || authorized_keys?.length) {
     authKey = Date.now() + Math.random().toString(36);
@@ -99,16 +92,9 @@ function handleConnection(ws, req, onClose) {
         }
 
         if (
-          allowed_publishers?.length &&
           !allowed_publishers?.includes(data[1].pubkey)
         ) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rejected: unauthorized"]));
 
-        if (broadcast_ratelimit && (broadcast_ratelimit > (Date.now() - lastEvent))) {
-          lastEvent = Date.now();
-          return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rate-limited: request too fast."]));
-        }
-
-        lastEvent = Date.now();
         if (!sessStarted) {
           console.log(process.pid, `>>>`, `${ws.ip} executed ${data[0]} command for the first. Initializing session`);
           await getIdleSess(ws);
@@ -148,7 +134,6 @@ function handleConnection(ws, req, onClose) {
           _auth(ws.id, ws.pubkey);
           if (authorized) return;
           authorized = true;
-          lastEvent = Date.now();
         }
         break;
       default:
@@ -159,9 +144,7 @@ function handleConnection(ws, req, onClose) {
 
   ws.on('error', console.error);
   ws.on('close', _ => {
-    onClose();
-
-    ident.delete(ws.ident);
+    delete ident[ws.ident];
 
     console.log(process.pid, "---", `${ws.ip} disconnected`);
 
@@ -174,12 +157,12 @@ function handleConnection(ws, req, onClose) {
 function handleWorker(msg) {
   switch (msg.type) {
     case "sessreg": {
-      if (!ident.has(msg.ident)) return _destroy(msg.id);
-      const ws = ident.get(msg.ident);
+      if (!ident.hasOwnProperty(msg.ident)) return _destroy(msg.id);
+      const ws = ident[msg.ident];
       ws.id = msg.id;
       ws.onready();
       csess[msg.id] = ws;
-      ident.delete(msg.ident);
+      delete ident[msg.ident];
       break;
     }
     case "upstream_msg":

@@ -47,7 +47,6 @@ const wss = new WebSocket.WebSocketServer({
   allowSynchronousEvents: true,
   perMessageDeflate: config.perMessageDeflate || true
 });
-const lastConn = new Map();
 
 const favicon = fs.existsSync(config.favicon) ? fs.readFileSync(config.favicon) : null;
 
@@ -113,24 +112,11 @@ server.on('request', (req, res) => {
 });
 
 server.on('upgrade', (req, sock, head) => {
-  for (const i of lastConn) {
-    if (config.incomming_ratelimit > (Date.now() - i[1])) continue;
-    lastConn.delete(i[0]);
-  }
-
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || sock.address()?.address;
 
   if (config.blocked_hosts && config.blocked_hosts.includes(ip)) return sock.destroy();
-  const lv = lastConn.get(ip) // last visit
-  if (config.incomming_ratelimit && (config.incomming_ratelimit > (Date.now() - lv))) {
-    log(`Rejected connection from ${ip} as the last connection was ${Date.now() - lv} ms ago.`);
-    lastConn.set(ip, Date.now());
-    return sock.destroy(); // destroy.
-  }
 
-  lastConn.set(ip, Date.now());
-
-  wss.handleUpgrade(req, sock, head, _ => bouncer.handleConnection(_, req, _ => lastConn.set(ip, Date.now())));
+  wss.handleUpgrade(req, sock, head, _ => bouncer.handleConnection(_, req));
 });
 
 const listened = server.listen(process.env.PORT || config.port, config.address || "0.0.0.0", _ => {
