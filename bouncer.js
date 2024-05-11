@@ -92,6 +92,7 @@ function handleConnection(ws, req) {
         }
 
         if (
+          allowed_publishers?.length &&
           !allowed_publishers?.includes(data[1].pubkey)
         ) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rejected: unauthorized"]));
 
