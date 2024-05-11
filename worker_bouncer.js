@@ -79,6 +79,9 @@ parentPort.on('message', m => {
           filters[fn].limit = ws.forcedLimit;
       }
 
+      if (max_known_events && getFilterLimit(filter) > max_known_events)
+        filter.limit = max_known_events;
+
       ws.subs[origID] = filters;
       ws.events[origID] = new Set();
       ws.pause_subs.delete(origID);
