@@ -20,6 +20,7 @@ if (relays.length < max_eose_score) max_eose_score = 0;
 const csess = {}; // this is used for relays.
 const userRelays = {}; // per ID contains Set() of <WebSocket>
 const idleSess = new Set();
+const idents = {};
 
 let stats = {
   _global: {
@@ -33,8 +34,7 @@ let stats = {
 parentPort.on('message', m => {
   switch (m.type) {
     case "getsess":
-      // [<ident>, <user info>]
-      getIdleSess(m.ident, m.data);
+      getIdleSess(m.data);
       break;
     case "req": {
       if (!csess.hasOwnProperty(m.id)) return;
@@ -139,6 +139,7 @@ parentPort.on('message', m => {
 
       delete userRelays[m.id];
       delete csess[m.id];
+      delete idents[m.ident];
       break;
     case "auth":
       if (!csess.hasOwnProperty(m.id)) return;
@@ -204,8 +205,15 @@ function bc(msg, id, toCacheOnly) {
   }
 }
 
-function getIdleSess(ident, infos) {
-  const ws = {};
+function getIdleSess(ws) {
+  if (idents.hasOwnProperty(ws.ident)) {
+    return parentPort.postMessage({
+      type: "sessreg",
+      ident: ws.ident,
+      id: idents[ws.ident].id
+    });
+  }
+
   ws.subs = {}; // contains filter submitted by clients. per subID
   ws.pause_subs = new Set(); // pause subscriptions from receiving events after reached over <filter.limit> until all relays send EOSE. per subID
   ws.events = {}; // only to prevent the retransmit of the same event. per subID
@@ -214,19 +222,6 @@ function getIdleSess(ident, infos) {
   ws.subalias = {};
   ws.fakesubalias = {};
   ws.mergedFilters = {};
-
-  // handled in bouncer.js
-  ws.ip = null;
-  ws.pubkey = null;
-  ws.rejectKinds = null;
-  ws.acceptKinds = null;
-  ws.forcedLimit = null;
-  ws.accurateMode = 0;
-  ws.saveMode = 0;
-
-  for (const i in infos) {
-    ws[i] = infos[i];
-  }
 
   if (ws.pubkey && private_keys[ws.pubkey]) {
     for (const relay of userRelays[ws.id]) {
@@ -240,14 +235,15 @@ function getIdleSess(ident, infos) {
   ws.id = idleSess.values().next().value;
   idleSess.delete(ws.id);
   csess[ws.id] = ws;
+  idents[ws.ident] = ws;
 
   parentPort.postMessage({
     type: "sessreg",
-    ident,
+    ident: ws.ident,
     id: ws.id
   });
 
-  if (log_about_relays) console.log(threadId, "---", ws.ip, "is now using session", ws.id);
+  console.log(threadId, "---", ws.ip, "is now using session", ws.id);
 
   newsess();
 }

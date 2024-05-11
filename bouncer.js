@@ -26,7 +26,7 @@ if (approved_publishers?.length) {
 const worker = new Worker(__dirname + "/worker_bouncer.js", { name: "Bostr (worker)" });
 
 const csess = {}; // this is used for relays.
-const ident = {};
+const idents = {};
 
 let zeroStats = {
   raw_rx: 0,
@@ -54,7 +54,7 @@ function handleConnection(ws, req) {
   ws.accurateMode = parseInt(query.accurate);
   ws.saveMode = parseInt(query.save);
 
-  ident[ws.ident] = ws;
+  idents[ws.ident] = ws;
 
   if (noscraper || authorized_keys?.length) {
     authKey = Date.now() + Math.random().toString(36);
@@ -96,9 +96,9 @@ function handleConnection(ws, req) {
         ) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rejected: unauthorized"]));
 
         if (!sessStarted) {
-          sessStarted = true;
           console.log(process.pid, `>>>`, `${ws.ip} executed ${data[0]} command for the first. Initializing session`);
           await getIdleSess(ws);
+          sessStarted = true;
         }
 
         _event(ws.id, data[1]);
@@ -113,9 +113,9 @@ function handleConnection(ws, req) {
         }
 
         if (!sessStarted) {
-          sessStarted = true;
           console.log(process.pid, `>>>`, `${ws.ip} executed ${data[0]} command for the first. Initializing session`);
           await getIdleSess(ws);
+          sessStarted = true;
         }
 
         _req(ws.id, data[1], data.slice(2));
@@ -144,7 +144,7 @@ function handleConnection(ws, req) {
 
   ws.on('error', console.error);
   ws.on('close', _ => {
-    delete ident[ws.ident];
+    delete idents[ws.ident];
 
     console.log(process.pid, "---", `${ws.ip} disconnected`);
 
@@ -157,12 +157,12 @@ function handleConnection(ws, req) {
 function handleWorker(msg) {
   switch (msg.type) {
     case "sessreg": {
-      if (!ident.hasOwnProperty(msg.ident)) return _destroy(msg.id);
-      const ws = ident[msg.ident];
+      if (!idents.hasOwnProperty(msg.ident)) return _destroy(msg.id);
+      if (idents[msg.ident].id === msg.id) return ws.onready(); // if existing is the same as the current one, just poke ready.
+      const ws = idents[msg.ident];
       ws.id = msg.id;
       ws.onready();
       csess[msg.id] = ws;
-      delete ident[msg.ident];
       break;
     }
     case "upstream_msg":
@@ -219,6 +219,7 @@ function _destroy(id) {
 function getIdleSess(ws) {
   const data = {
     ip: ws.ip,
+    ident: ws.ident,
     pubkey: ws.pubkey,
     rejectKinds: ws.rejectKinds,
     acceptKinds: ws.acceptKinds,
@@ -229,7 +230,6 @@ function getIdleSess(ws) {
 
   worker.postMessage({
     type: "getsess",
-    ident: ws.ident,
     data
   });
 
