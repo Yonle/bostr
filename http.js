@@ -27,7 +27,6 @@ if (
     allowHTTP1: true,
     key: fs.readFileSync(config.https?.privKey),
     cert: fs.readFileSync(config.https?.certificate),
-    noDelay: true,
     dhparam: "auto",
     paddingStrategy: http2.constants.PADDING_STRATEGY_MAX
   }
@@ -38,14 +37,13 @@ if (
   server = http2.createSecureServer(http2_options);
   server.isStandaloneHTTPS = true;
 } else {
-  server = http.createServer({ noDelay: true })
+  server = http.createServer()
   server.isStandaloneHTTPS = false;
 }
 
 const wss = new WebSocket.WebSocketServer({
   noServer: true,
-  allowSynchronousEvents: true,
-  perMessageDeflate: config.perMessageDeflate || true
+  perMessageDeflate: config.perMessageDeflate || false
 });
 
 const favicon = fs.existsSync(config.favicon) ? fs.readFileSync(config.favicon) : null;

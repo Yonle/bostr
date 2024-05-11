@@ -282,9 +282,7 @@ function newConn(addr, id, reconn_t = 0) {
   const relay = new WebSocket(addr, {
     headers: {
       "User-Agent": `Bostr ${version}; The nostr relay bouncer; https://github.com/Yonle/bostr`,
-    },
-    noDelay: true,
-    allowSynchronousEvents: true
+    }
   });
 
   relay.isCache = relay_type(addr) === "cache_relay";
