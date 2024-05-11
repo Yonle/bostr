@@ -20,7 +20,7 @@ This project solve the problem by **reducing** the number of connected relays, a
 
 You could set up an bostr bouncer by installing [Bostr CLI](#bostr-cli), or setting up via [The Source Code](#source-code), or via [Docker](#docker).
 
-**Tip:** When dependencies installation is failed due to failed compilation of `bufferutil` or `utf-8-validate` packages, Run `npm install` with `--omit=optional` being set (Example: `npm install --omit=optional -g bostr`).
+**Tip:** When dependencies installation is failed due to failed compilation of `bufferutil` or `utf-8-validate` packages, Run `npm install` with `--omit=optional` (Example: `npm install --omit=optional -g bostr`).
 
 ### Bostr CLI
 Install bostr via `npm`:
