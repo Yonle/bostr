@@ -57,6 +57,12 @@ module.exports = {
   // Setting as -1 will disable max subscription limit.
   max_client_subs: -1,
 
+  // Maximum Known Events
+  // Used for knowing what events has been forwarded to client in order to prevent duplicates to be forwarded.
+  //
+  // Setting as 0 will store known events to memory without limits.
+  max_known_events: 1000,
+
   // Wait for every connected relays send EOSE.
   // Could improve accuracy on received events.
   //

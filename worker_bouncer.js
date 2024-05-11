@@ -7,7 +7,7 @@ const WebSocket = require("ws");
 const { validateEvent, nip19, matchFilters, mergeFilters, getFilterLimit } = require("nostr-tools");
 const nip42 = require("./nip42.js");
 
-let { relays, log_about_relays, private_keys, reconnect_time, wait_eose, pause_on_limit, max_eose_score, upstream_ratelimit_expiration, max_client_subs, idle_sessions, cache_relays, loadbalancer } = require(process.env.BOSTR_CONFIG_PATH || "./config");
+let { relays, log_about_relays, private_keys, reconnect_time, wait_eose, pause_on_limit, max_eose_score, upstream_ratelimit_expiration, max_client_subs, idle_sessions, cache_relays, loadbalancer, max_known_events } = require(process.env.BOSTR_CONFIG_PATH || "./config");
 
 log_about_relays = process.env.LOG_ABOUT_RELAYS || log_about_relays;
 
@@ -330,6 +330,9 @@ function newConn(addr, id, reconn_t = 0) {
 
         if (!relay.isLoadBalancer) client.events[data[1]].add(data[2]?.id);
         parentPort.postMessage({ type: "upstream_msg", id, data: JSON.stringify(data) });
+
+        if (max_known_events && client.events[data[1]].size > max_known_events)
+          client.events[data[1]].delete(client.events[data[1]].values().next().value);
 
         stats._global.rx++;
         stats[addr].rx++;
