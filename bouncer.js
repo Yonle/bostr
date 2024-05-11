@@ -96,9 +96,9 @@ function handleConnection(ws, req) {
         ) return ws.send(JSON.stringify(["OK", data[1]?.id, false, "rejected: unauthorized"]));
 
         if (!sessStarted) {
+          sessStarted = true;
           console.log(process.pid, `>>>`, `${ws.ip} executed ${data[0]} command for the first. Initializing session`);
           await getIdleSess(ws);
-          sessStarted = true;
         }
 
         _event(ws.id, data[1]);
@@ -113,9 +113,9 @@ function handleConnection(ws, req) {
         }
 
         if (!sessStarted) {
+          sessStarted = true;
           console.log(process.pid, `>>>`, `${ws.ip} executed ${data[0]} command for the first. Initializing session`);
           await getIdleSess(ws);
-          sessStarted = true;
         }
 
         _req(ws.id, data[1], data.slice(2));
