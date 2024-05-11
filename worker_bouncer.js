@@ -318,7 +318,7 @@ function newConn(addr, id, reconn_t = 0) {
         if (!client.subalias.hasOwnProperty(data[1])) return;
         data[1] = client.subalias[data[1]];
 
-        if (client.events[data[1]].hasOwnProperty(data[2]?.id)) return; // No need to transmit once it has been transmitted before.
+        if (client.events[data[1]].has(data[2]?.id)) return; // No need to transmit once it has been transmitted before.
         if (!relay.isCache) bc(["EVENT", data[2]], id, true); // store to cache relay
         const filter = client.mergedFilters[data[1]];
         if (client.pause_subs.has(data[1]) && (filter.since > data[2].created_at) && !relay.isCache) return;
@@ -334,7 +334,7 @@ function newConn(addr, id, reconn_t = 0) {
         if (!relay.isLoadBalancer) client.events[data[1]].add(data[2]?.id);
         parentPort.postMessage({ type: "upstream_msg", id, data: JSON.stringify(data) });
 
-        if (max_known_events && client.events[data[1]].size > max_known_events)
+        if (max_known_events && client.events[data[1]].size >= max_known_events)
           client.events[data[1]].delete(client.events[data[1]].values().next().value);
 
         stats._global.rx++;

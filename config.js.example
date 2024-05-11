@@ -60,8 +60,9 @@ module.exports = {
   // Maximum Known Events
   // Used for knowing what events has been forwarded to client in order to prevent duplicates to be forwarded.
   //
-  // Setting as 0 will store known events to memory without limits.
-  max_known_events: 1000,
+  // Setting as 0 will store known events to memory without limit until the subscription is closed.
+  // Reduce this value if memory usage is high. But don't go too low as duplicates will be forwarded to client.
+  max_known_events: 0,
 
   // Wait for every connected relays send EOSE.
   // Could improve accuracy on received events.
