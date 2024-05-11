@@ -30,6 +30,9 @@
     "nostr-tools": "^2.5.2",
     "ws": "^8.17.0"
   },
+  "optionalDependencies": {
+    "bufferutil": "^4.0.8"
+  },
   "engines": {
     "node": ">=18"
   }

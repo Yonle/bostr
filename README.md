@@ -20,6 +20,8 @@ This project solve the problem by **reducing** the number of connected relays, a
 
 You could set up an bostr bouncer by installing [Bostr CLI](#bostr-cli), or setting up via [The Source Code](#source-code), or via [Docker](#docker).
 
+**Tip:** When dependencies installation is failed due to failed compilation of `bufferutil` package, Run `npm install` with `--omit=optional` being set (Example: `npm install --omit=optional -g bostr`).
+
 ### Bostr CLI
 Install bostr via `npm`:
 ```
@@ -58,7 +60,7 @@ When configuring reverse proxy, Ensure that `x-forwarded-proto` header was set a
 ```
 git clone -b stable https://github.com/Yonle/bostr
 cd bostr
-npm i
+npm install
 ```
 
 Rename `config.js.example` as `config.js`, Start editing the file and fill some required fields accordingly to your needs. You could run it for everyone or only for yourself.
