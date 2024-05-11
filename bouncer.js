@@ -158,8 +158,8 @@ function handleWorker(msg) {
   switch (msg.type) {
     case "sessreg": {
       if (!idents.hasOwnProperty(msg.ident)) return _destroy(msg.id);
-      if (idents[msg.ident].id === msg.id) return ws.onready(); // if existing is the same as the current one, just poke ready.
       const ws = idents[msg.ident];
+      if (ws.id === msg.id) return ws.onready(); // if existing is the same as the current one, just poke ready.
       ws.id = msg.id;
       ws.onready();
       csess[msg.id] = ws;
