@@ -55,7 +55,7 @@ switch (argv[0]) {
     if (unknown.length) console.log("Unknown Field:\n- " + unknown.join("\n- "));
     if (missing.length) {
       console.log("Missing Field:\n- " + missing.join("\n- "));
-      console.log("\nPlease check your config and recheck again.");
+      console.log("\nPlease check your config and try again.");
       return process.exit(1);
     } else {
       console.log("\nNo config changes needed.");
