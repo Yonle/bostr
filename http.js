@@ -8,6 +8,7 @@ const http = require("http");
 const http2 = require("http2");
 const fs = require("fs");
 const bouncer = require(`./bouncer.js`);
+const undici = require("undici");
 
 // For log
 const curD = _ => (new Date()).toLocaleString("ia");
@@ -18,6 +19,18 @@ let server = null;
 let config = require(process.env.BOSTR_CONFIG_PATH || "./config");
 
 config.server_meta.version = version;
+
+if (!config.relays?.length) (async () => {
+  console.log("Load balancer mode. Fetching relays list from", config.loadbalancer[0].replace(/^ws/, "http"));
+  const request = await undici.request(config.loadbalancer[0].replace(/^ws/, "http"), {
+    headers: {
+      "User-Agent": `Bostr ${version}; The nostr relay bouncer; https://github.com/Yonle/bostr`
+    }
+  });
+
+  const text = await request.text();
+  relays = text.match(/(w{1,2}s)s?:\/\/.+/g);
+})();
 
 if (
   fs.existsSync(config.https?.privKey) &&
