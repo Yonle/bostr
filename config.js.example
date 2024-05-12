@@ -58,6 +58,7 @@ module.exports = {
 
   // Maximum Known Events
   // Used for knowing what events has been forwarded to client in order to prevent duplicates to be forwarded.
+  // This is only storing event IDs into memory (RAM), not an entire event blob.
   //
   // Setting as 0 will store known events to memory without limit until the subscription is closed.
   // Reduce this value if memory usage is high. But don't go too low as duplicates will be forwarded to client.
