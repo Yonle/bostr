@@ -69,7 +69,7 @@ module.exports = {
   //
   // Depending on your configured relays,
   // It may could cause loading problems in client due to slow EOSE from bouncer.
-  // You could try fix this by changing <eose_timeout> or <max_eose_score> value.
+  // You could try fix this by changing <max_eose_score> value.
   wait_eose: true,
 
   // Pause an subscription from receiving further events after reached to <filter.limit>
