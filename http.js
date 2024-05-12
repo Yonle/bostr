@@ -43,7 +43,7 @@ if (
 
 const wss = new WebSocket.WebSocketServer({
   noServer: true,
-  perMessageDeflate: config.perMessageDeflate || false
+  perMessageDeflate: config.perMessageDeflate || true
 });
 
 const favicon = fs.existsSync(config.favicon) ? fs.readFileSync(config.favicon) : null;
