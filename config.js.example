@@ -35,9 +35,7 @@ module.exports = {
   log_about_relays: false,
 
   // Use deflate compression for websocket.
-  // This could save user bandwidths.
-  //
-  // NOTE: CPU intensive
+  // This could save user bandwidth.
   perMessageDeflate: true,
 
   // Reject scraper requests.
