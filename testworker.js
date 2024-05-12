@@ -11,7 +11,7 @@ worker.on('message', msg => {
     worker.postMessage({
       type: "req",
       id,
-      sid: "testing",
+      sid: "TestWorker",
       filters: [{ kinds: [1] }]
     });
   }
