@@ -12,11 +12,12 @@ function showHelp() {
   console.log(
     "Usage: bostr [command] (argv)\n" +
     "Available command:\n" +
-    "  makeconf [conffile]  - Make config file\n" +
-    "  checkconf [conffile] - Check config file\n" +
-    "  start [conffile]     - Run bostr with specified config\n" +
-    "  hexconverter [nip19] - Convert NIP-19 string to hex\n" +
-    "  help                 - Show this help text\n\n" +
+    "  makeconf [conffile]   - Make config file\n" +
+    "  checkconf [conffile]  - Check config file\n" +
+    "  start [conffile]      - Run bostr with specified config\n" +
+    "  hexconverter [nip19]  - Convert NIP-19 string to hex\n" +
+    "  testworker [conffile] - Test worker with specified bostr config\n" +
+    "  help                  - Show this help text\n\n" +
     "Software is licensed under BSD-3-Clause\n" +
     "https://github.com/Yonle/bostr"
   );
@@ -70,6 +71,19 @@ switch (argv[0]) {
 
     process.env.BOSTR_CONFIG_PATH = readPath(argv[1]);
     require("./index.js");
+    break;
+  case "testworker":
+    if (!argv[1]) return console.log("Usage: bostr testworker [conffile]");
+    if (!fs.existsSync(argv[1])) {
+      console.error("Config not exists.");
+      return process.exit(254);
+    }
+
+    process.env.BOSTR_CONFIG_PATH = readPath(argv[1]);
+
+    console.log("Press CTRL + C to stop the test.");
+    console.log("Using config:", process.env.BOSTR_CONFIG_PATH);
+    require("./testworker.js");
     break;
   case "hexconverter":
     if (!argv[1]) return console.log("Usage: bostr hexconverter [npub|nsec|....] ....");
