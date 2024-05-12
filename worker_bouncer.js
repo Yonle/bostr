@@ -17,7 +17,7 @@ if (relays.length) loadbalancer.unshift("_me");
 // CL MaxEoseScore: Set <max_eose_score> as 0 if configured relays is under of the expected number from <max_eose_score>
 if (relays.length < max_eose_score) max_eose_score = 0;
 
-const csess = {}; // this is used for relays.
+const csess = {};
 const userRelays = {}; // per ID contains Set() of <WebSocket>
 const idleSess = new Set();
 const idents = {};
@@ -194,7 +194,7 @@ function newsess() {
   }
 }
 
-// WS - Broadcast message to every existing sockets
+// WS - Broadcast message to every upstream relays
 function bc(msg, id, toCacheOnly) {
   if (toCacheOnly && !cache_relays?.length) return;
   for (const relay of userRelays[id]) {
@@ -220,8 +220,8 @@ function getIdleSess(ws) {
   ws.subs = {}; // contains filter submitted by clients. per subID
   ws.pause_subs = new Set(); // pause subscriptions from receiving events after reached over <filter.limit> until all relays send EOSE. per subID
   ws.events = {}; // only to prevent the retransmit of the same event. per subID
-  ws.pendingEOSE = {}; // each contain subID
-  ws.reconnectTimeout = new Set(); // relays timeout() before reconnection. Only use after client disconnected.
+  ws.pendingEOSE = {}; // each contain subID of integer
+  ws.reconnectTimeout = new Set(); // relay's timeout() before reconnection. Only use after client disconnected.
   ws.subalias = {};
   ws.fakesubalias = {};
   ws.mergedFilters = {};
@@ -274,7 +274,6 @@ function relay_type(addr) {
   }
 }
 
-// WS - Sessions
 function newConn(addr, id, reconn_t = 0) {
   if (!csess.hasOwnProperty(id)) return;
   if (!stats[addr]) stats[addr] = { raw_rx: 0, rx: 0, tx: 0, f: 0 };
@@ -431,7 +430,7 @@ function newConn(addr, id, reconn_t = 0) {
 
   relay.on('close', _ => {
     if (!userRelays.hasOwnProperty(id)) return;
-    userRelays[id].delete(relay); // Remove this socket session from <client.relays> list
+    userRelays[id].delete(relay);
     if (log_about_relays) console.log(threadId, "-!-", id, "Disconnected from", addr, `(${relay_type(addr)})`);
     reconn_t += reconnect_time || 5000
     setTimeout(_ => {
@@ -453,7 +452,7 @@ function newConn(addr, id, reconn_t = 0) {
     stats[addr].f++
   });
 
-  userRelays[id].add(relay); // Add this socket session to <client.relays>
+  userRelays[id].add(relay);
 }
 
 for (let i = 1; i <= (idle_sessions || 1); i++) {

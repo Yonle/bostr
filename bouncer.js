@@ -25,7 +25,7 @@ if (approved_publishers?.length) {
 
 const worker = new Worker(__dirname + "/worker_bouncer.js", { name: "Bostr (worker)" });
 
-const csess = {}; // this is used for relays.
+const csess = {};
 const idents = {};
 
 let zeroStats = {
@@ -36,7 +36,6 @@ let zeroStats = {
 }
 let stats = {};
 
-// CL - User socket
 function handleConnection(ws, req) {
   let query = querystring.parse(req.url.slice(2));
   let authKey = null;
@@ -155,6 +154,8 @@ function handleConnection(ws, req) {
   });
 }
 
+// Below code is for talking to worker.
+
 function resolveClient(ws) {
   for (const resolve of ws.onready) {
     ws.onready.delete(resolve);
@@ -183,7 +184,6 @@ function handleWorker(msg) {
   }
 };
 
-// WS - Broadcast message to every existing sockets
 function _req(id, sid, filters) {
   worker.postMessage({
     type: "req",
