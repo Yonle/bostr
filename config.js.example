@@ -186,7 +186,7 @@ module.exports = {
   // NOTE: You will need to make sure that these bouncers has the same relays list as the other bouncers did,
   //       Otherwise the listing page of this http server will be inaccurate.
   //
-  // ATTENTION: This load balancer is ONLY designed for bouncers in mimd.
+  // ATTENTION: This load balancer is ONLY designed for bouncers in mind.
   //            If you REALLY want to use it with your relays, Ensure that
   //            Every single relays that you provide below is using the same database as the others did.
   loadbalancer: [
