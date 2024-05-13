@@ -18,6 +18,9 @@ const log = _ => console.log(process.pid, curD(), "-", _);
 let server = null;
 let config = require(process.env.BOSTR_CONFIG_PATH || "./config");
 
+let wslinkregex = /(?:^- )(wss?:\/\/.*)(?: \(.*\))/gm;
+let loadbalancerUpstreamLinks = [];
+
 config.server_meta.version = version;
 
 if (!config.relays?.length) (async () => {
@@ -29,7 +32,12 @@ if (!config.relays?.length) (async () => {
   });
 
   const text = await request.body.text();
-  config.relays = text.match(/(w{1,2}s)s?:\/\/.+/g);
+  let l = null
+  while ((l = wslinkregex.exec(text)) !== null) {
+    loadbalancerUpstreamLinks.push(l[1]);
+  }
+  console.log("Got list:");
+  console.log("- " + loadbalancerUpstreamLinks.join("\n- "))
 })();
 
 if (
@@ -77,10 +85,15 @@ server.on('request', (req, res) => {
       "Content-Type": "text/plain"
     });
     res.write("Hello. This nostr bouncer (bostr) is bouncing the following relays:\n\n");
-    config.relays.forEach(_ => {
-      const { raw_rx, rx, tx, f } = bouncer.getStat(_);
-      res.write("- " + _ + ` (raw_rx: ${raw_rx}; rx: ${rx}; tx: ${tx}; fail: ${f})` + "\n");
-    });
+
+    if (config.relays.length) {
+      config.relays.forEach(_ => {
+        const { raw_rx, rx, tx, f } = bouncer.getStat(_);
+        res.write("- " + _ + ` (raw_rx: ${raw_rx}; rx: ${rx}; tx: ${tx}; fail: ${f})` + "\n");
+      });
+    } else if (loadbalancerUpstreamLinks.length) {
+      res.write("- " + loadbalancerUpstreamLinks.join("\n- ") + "\n");
+    }
 
     res.write(`\nI have ${wss.clients.size} clients currently connected to this bouncer${(process.env.CLUSTERS || config.clusters) > 1 ? " on this cluster" : ""}.\n`);
 
