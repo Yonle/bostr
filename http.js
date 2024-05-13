@@ -28,8 +28,8 @@ if (!config.relays?.length) (async () => {
     }
   });
 
-  const text = await request.text();
-  relays = text.match(/(w{1,2}s)s?:\/\/.+/g);
+  const text = await request.body.text();
+  config.relays = text.match(/(w{1,2}s)s?:\/\/.+/g);
 })();
 
 if (
