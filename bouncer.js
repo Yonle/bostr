@@ -92,10 +92,8 @@ function handleConnection(ws, req) {
         if (!validateEvent(data[1])) return ws.send(JSON.stringify(["NOTICE", "error: invalid event"]));
         if (data[1].kind == 22242) return ws.send(JSON.stringify(["OK", data[1].id, false, "rejected: kind 22242"]));
         if (blocked_publishers?.includes(data[1].pubkey)) return ws.send(JSON.stringify(["OK", data[1].id, false, "blocked: this event author is blacklisted."]));
-        if (!authorized) {
-          ws.send(JSON.stringify(["OK", data[1].id, false, "auth-required: authentication is required to perform this action."]));
-          return ws.send(JSON.stringify(["AUTH", authKey]));
-        }
+        if (!authorized)
+          return ws.send(JSON.stringify(["OK", data[1].id, false, "auth-required: authentication is required to perform this action."]));
 
         if (
           allowed_publishers?.length &&
@@ -115,10 +113,8 @@ function handleConnection(ws, req) {
         if (data.length < 3) return ws.send(JSON.stringify(["NOTICE", "error: bad request."]));
         if (typeof(data[1]) !== "string") return ws.send(JSON.stringify(["NOTICE", "error: expected subID a string. but got the otherwise."]));
         if (typeof(data[2]) !== "object") return ws.send(JSON.stringify(["CLOSED", data[1], "error: expected filter to be obj, instead gives the otherwise."]));
-        if (!authorized) {
-          ws.send(JSON.stringify(["CLOSED", data[1], "auth-required: authentication is required to perform this action."]));
-          return ws.send(JSON.stringify(["AUTH", authKey]));
-        }
+        if (!authorized)
+          return ws.send(JSON.stringify(["CLOSED", data[1], "auth-required: authentication is required to perform this action."]));
 
         if (!sessStarted) {
           console.log(process.pid, `>>>`, `${ws.ip} executed ${data[0]} command for the first. Initializing session`);
