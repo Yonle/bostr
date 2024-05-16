@@ -105,6 +105,7 @@ function handleConnection(ws, req) {
         if (!sessStarted) {
           console.log(process.pid, `>>>`, `${ws.ip} executed ${data[0]} command for the first. Initializing session`);
           await getIdleSess(ws);
+          _auth(ws.id, ws.pubkey);
           sessStarted = true;
         }
 
@@ -122,6 +123,7 @@ function handleConnection(ws, req) {
         if (!sessStarted) {
           console.log(process.pid, `>>>`, `${ws.ip} executed ${data[0]} command for the first. Initializing session`);
           await getIdleSess(ws);
+          _auth(ws.id, ws.pubkey);
           sessStarted = true;
         }
 
@@ -135,10 +137,8 @@ function handleConnection(ws, req) {
         break;
       case "AUTH":
         if (auth(authKey, data[1], ws, req)) {
-          authKey = Date.now() + Math.random().toString(36);
           ws.pubkey = data[1].pubkey;
           console.log(process.pid, "---", ws.ip, "successfully authorized as", ws.pubkey, private_keys[ws.pubkey] ? "(admin)" : "(user)");
-          _auth(ws.id, ws.pubkey);
           if (authorized) return;
           authorized = true;
         }

@@ -146,6 +146,7 @@ parentPort.on('message', m => {
       break;
     case "auth":
       if (!csess.hasOwnProperty(m.id)) return;
+      if (csess[m.id].pubkey === m.pubkey) return;
       csess[m.id].pubkey = m.pubkey;
       if (m.pubkey && private_keys[m.pubkey]) {
         for (const relay of userRelays[m.id]) {
