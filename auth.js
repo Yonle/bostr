@@ -1,6 +1,15 @@
 "use strict";
-const { validateEvent, verifyEvent } = require("nostr-tools");
-const { authorized_keys, private_keys, noscraper } = require(process.env.BOSTR_CONFIG_PATH || "./config");
+let { validateEvent, verifyEvent, nip19 } = require("nostr-tools");
+let { authorized_keys, private_keys, noscraper } = require(process.env.BOSTR_CONFIG_PATH || "./config");
+
+authorized_keys = authorized_keys?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
+
+for (const key in private_keys) {
+  if (!key.startsWith("npub")) continue;
+  private_keys[nip19.decode(key).data] = private_keys[key];
+
+  delete private_keys[key];
+}
 
 module.exports = (authKey, data, ws, req) => {
   if (!authorized_keys?.length && !Object.keys(private_keys).length && !noscraper) return; // do nothing

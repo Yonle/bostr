@@ -14,6 +14,13 @@ authorized_keys = authorized_keys?.map(i => i.startsWith("npub") ? nip19.decode(
 allowed_publishers = allowed_publishers?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
 blocked_publishers = blocked_publishers?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);
 
+for (const key in private_keys) {
+  if (!key.startsWith("npub")) continue;
+  private_keys[nip19.decode(key).data] = private_keys[key];
+
+  delete private_keys[key];
+}
+
 // The following warning will be removed in the next 2 stable release
 if (approved_publishers?.length) {
   allowed_publishers = approved_publishers?.map(i => i.startsWith("npub") ? nip19.decode(i).data : i);

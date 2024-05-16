@@ -129,15 +129,10 @@ module.exports = {
   // NOTE: - Require NIP-42 compatible nostr client
   private_keys: {
     // "pubkey-in-hex": "privatekey-in-hex",
-    // "pubkey-in-hex": "nsec ...."
+    // "pubkey-in-hex": "nsec ....",
+    // "npub ....": "privatekey-in-hex",
+    // "npub ....": "nsec ...."
   },
-  // Tip: If you want to convert your pubkey/privatekey to hex,
-  //      You could run the following command:
-  //        $ node hexconverter.js npub....
-  //        $ node hexconverter.js nsec....
-  //      or
-  //        $ bostr hexconverter npub....
-  //        $ bostr hexconverter nsec....
 
   // Server information.
   // Only for when nostr client requesting server information.
