@@ -25,11 +25,9 @@ let loadbalancerUpstreamLinks = [];
 
 config.server_meta.version = version;
 config.server_meta.limitation = {
-  auth_required: false
+  auth_required: (config.server_meta.loadbalancer?.length || config.authorized_keys?.length) ? true : false,
+  max_subscription: config.max_client_subs || Infinity
 };
-
-if (config.server_meta.loadbalancer?.length || config.authorized_keys?.length)
-  config.server_meta.limitation.auth_required = true;
 
 if (!config.relays?.length) (async () => {
   console.log("Load balancer mode. Fetching relays list from", config.loadbalancer[0].replace(/^ws/, "http"));

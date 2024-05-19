@@ -40,7 +40,7 @@ parentPort.on('message', m => {
       if (!csess.hasOwnProperty(m.id)) return;
       const ws = csess[m.id];
 
-      if ((max_client_subs !== -1) && (Object.keys(ws.subs).length > max_client_subs))
+      if ((max_client_subs !== -1) && (Object.keys(ws.subs).length >= max_client_subs))
         return parentPort.postMessage({
           type: "upstream_msg",
           id: m.id,
