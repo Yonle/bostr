@@ -184,8 +184,11 @@ module.exports = {
   // You could make this bouncer to connect to other bouncer in order to save this server loads.
   // It's suggested that the following bouncers does not have `noscraper` or `authorized_keys` being set.
   //
-  // NOTE: You will need to make sure that these bouncers has the same relays list as the other bouncers did,
+  // NOTE: Ensure that these bouncers has the same relays list as the other bouncers did,
   //       Otherwise the listing page of this http server will be inaccurate.
+  //
+  // NOTE: Ensure that these bouncer's <max_conn_per_ip> is set as "Infinity"
+  //       If you want to handle <max_conn_per_ip>, Set in here instead
   //
   // ATTENTION: This load balancer is ONLY designed for bouncers in mind.
   //            If you REALLY want to use it with your relays, Ensure that
