@@ -90,7 +90,8 @@ server.on('request', (req, res) => {
     res.writeHead(200, {
       "Content-Type": "text/plain"
     });
-    res.write("Hello. This nostr bouncer (bostr) is bouncing the following relays:\n\n");
+    res.write("Welcome to Bostr. A nostr relay aggregator for saving mobile data usage when using nostr.");
+    res.write("This nostr bouncer is bouncing the following relays:\n\n");
 
     if (config.relays.length) {
       config.relays.forEach(_ => {
