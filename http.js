@@ -22,12 +22,18 @@ let wslinkregex = /(?:^- )(wss?:\/\/.*)(?: \(.*\))/gm;
 let loadbalancerUpstreamLinks = [];
 
 config.server_meta.version = version;
+config.server_meta.limitation = {
+  auth_required: false
+};
+
+if (config.server_meta.loadbalancer?.length || config.authorized_keys?.length)
+  config.server_meta.limitation.auth_required = true;
 
 if (!config.relays?.length) (async () => {
   console.log("Load balancer mode. Fetching relays list from", config.loadbalancer[0].replace(/^ws/, "http"));
   const request = await undici.request(config.loadbalancer[0].replace(/^ws/, "http"), {
     headers: {
-      "User-Agent": `Bostr ${version}; The nostr relay bouncer; https://github.com/Yonle/bostr`
+      "User-Agent": `Bostr ${version}; The nostr relay bouncer; https://github.com/Yonle/bostr; ${config.server_meta.canonical_url || "No canonical bouncer URL specified"}; Contact: ${config.server_meta.contact}`
     }
   });
 

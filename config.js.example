@@ -142,6 +142,7 @@ module.exports = {
     "description": "Nostr relay bouncer",
     "name": "Bostr",
     "software": "git+https://github.com/Yonle/bostr",
+    "canonical_url": "wss://bostr.example.com",
 
     // Some nostr client may read the following for compatibility check.
     // You may change the supported_nips to match with what your relays supported.

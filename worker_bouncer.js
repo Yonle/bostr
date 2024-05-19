@@ -7,7 +7,7 @@ const WebSocket = require("ws");
 const { validateEvent, nip19, matchFilters, mergeFilters, getFilterLimit } = require("nostr-tools");
 const nip42 = require("./nip42.js");
 
-let { relays, log_about_relays, private_keys, reconnect_time, wait_eose, pause_on_limit, max_eose_score, upstream_ratelimit_expiration, max_client_subs, idle_sessions, cache_relays, loadbalancer, max_known_events } = require(process.env.BOSTR_CONFIG_PATH || "./config");
+let { relays, log_about_relays, server_meta, private_keys, reconnect_time, wait_eose, pause_on_limit, max_eose_score, upstream_ratelimit_expiration, max_client_subs, idle_sessions, cache_relays, loadbalancer, max_known_events } = require(process.env.BOSTR_CONFIG_PATH || "./config");
 
 log_about_relays = process.env.LOG_ABOUT_RELAYS || log_about_relays;
 
@@ -280,7 +280,7 @@ function newConn(addr, id, reconn_t = 0) {
   if (!stats[addr]) stats[addr] = { raw_rx: 0, rx: 0, tx: 0, f: 0 };
   const relay = new WebSocket(addr, {
     headers: {
-      "User-Agent": `Bostr ${version}; The nostr relay bouncer; https://github.com/Yonle/bostr`,
+      "User-Agent": `Bostr ${version}; The nostr relay bouncer; https://github.com/Yonle/bostr; ${server_meta.canonical_url || "No canonical bouncer URL specified"}; Contact: ${server_meta.contact}`,
     }
   });
 
