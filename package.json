@@ -28,7 +28,7 @@
   "homepage": "https://github.com/Yonle/bostr#readme",
   "dependencies": {
     "nostr-tools": "^2.5.2",
-    "undici": "^6.16.1",
+    "undici": "^6.17.0",
     "ws": "^8.17.0"
   },
   "optionalDependencies": {
