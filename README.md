@@ -14,7 +14,7 @@ This project solve the problem by **proxying** multiple relays in a single socke
 ## How it works?
 ![How it works](img/how_it_works.png)
 
-In order to make this work properly, A nostr client should only connect to a single bostr relay and no other.
+In order to make this work properly, A nostr client should only connect to a single bostr relay.
 
 ## Installation
 - [NodeJS](https://nodejs.org) (v18 or up)
