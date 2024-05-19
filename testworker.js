@@ -1,3 +1,4 @@
+"use strict";
 const { Worker } = require("worker_threads");
 const worker = new Worker(__dirname + "/worker_bouncer.js", { name: "Bostr (worker)" });
 
