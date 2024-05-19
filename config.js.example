@@ -53,6 +53,10 @@ module.exports = {
   // Setting as 0 will disable ratelimit handling.
   upstream_ratelimit_expiration: 10000,
 
+  // Maximum incomming connections per IP.
+  // By default, This is Infinity. Change the value as Integer (number) to override.
+  max_conn_per_ip: Infinity,
+
   // Maximum subscriptions that client could open.
   // Setting as -1 will disable max subscription limit.
   max_client_subs: -1,

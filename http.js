@@ -18,6 +18,8 @@ const log = _ => console.log(process.pid, curD(), "-", _);
 let server = null;
 let config = require(process.env.BOSTR_CONFIG_PATH || "./config");
 
+let connectedHosts = [];
+
 let wslinkregex = /(?:^- )(wss?:\/\/.*)(?: \(.*\))/gm;
 let loadbalancerUpstreamLinks = [];
 
@@ -147,8 +149,11 @@ server.on('upgrade', (req, sock, head) => {
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || sock.address()?.address;
 
   if (config.blocked_hosts && config.blocked_hosts.includes(ip)) return sock.destroy();
+  if (connectedHosts.filter(i => i === ip).length >= (config.max_conn_per_ip || Infinity)) return sock.destroy();
 
-  wss.handleUpgrade(req, sock, head, _ => bouncer.handleConnection(_, req));
+  connectedHosts.push(ip);
+
+  wss.handleUpgrade(req, sock, head, _ => bouncer.handleConnection(_, req, _ => delete connectedHosts[connectedHosts.indexOf(ip)]));
 });
 
 const listened = server.listen(process.env.PORT || config.port, config.address || "0.0.0.0", _ => {

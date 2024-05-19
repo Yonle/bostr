@@ -43,7 +43,7 @@ let zeroStats = {
 }
 let stats = {};
 
-function handleConnection(ws, req) {
+function handleConnection(ws, req, onClose) {
   let query = querystring.parse(req.url.slice(2));
   let authKey = null;
   let authorized = true;
@@ -147,6 +147,8 @@ function handleConnection(ws, req) {
 
   ws.on('error', console.error);
   ws.on('close', _ => {
+    onClose();
+
     delete idents[ws.ident];
 
     console.log(process.pid, "---", `${ws.ip} disconnected`);
