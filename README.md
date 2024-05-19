@@ -2,17 +2,19 @@
 A nostr relay bouncer.
 
 ## What is this?
-**Bostr** is an nostr relay aggregator **proxy** that acts like a regular nostr relay. It connects to multiple configured relays to exchange data (events).
+**Bostr** is an nostr relay aggregator **proxy** that acts like a regular nostr relay. It connects to multiple configured relays to exchange data (events). This project purpose is saving mobile user's bandwidth when using nostr.
 
 ## Why?
 Nostr relays is a bunch of dummy servers that store user events. Normally nostr clients connects to more than 5-10 relays to receive and transmit events.
 
-Due to it's nature that connects to more than just a single relay, **Client bandwidth usage is high.** And because of this, Nostr bandwidth usage is not really recommended for some users, notably **mobile data users.**
+Due to it's nature that connects to more than just a single relay, It's transmitting and retrieving the same event across relays over and over, Which then makes the **client bandwidth usage to be high.** And because of this, Nostr bandwidth usage is not really recommended for some users, notably **mobile data users.**
 
-This project solve the problem by **reducing** the number of connected relays, at the same time **proxying** multiple relays in a single socket to nostr client.
+This project solve the problem by **proxying** multiple relays in a single socket while **not forwarding the same event** to the client.
 
 ## How it works?
 ![How it works](img/how_it_works.png)
+
+In order to make this work properly, A nostr client should only connect to a single bostr relay and no other.
 
 ## Installation
 - [NodeJS](https://nodejs.org) (v18 or up)
