@@ -132,6 +132,7 @@ server.on('request', (req, res) => {
     res.write(`\n\n- To connect with save mode${config.pause_on_limit ? " (Default)" : ""}, Connect:`);
     res.write(`\n  ${serverAddr}?save=1`);
     res.write(`\n  (Saves bandwidth usage)`);
+    res.write(`\n\nAdministrator Contact: ${config.server_meta.contact}`);
     res.end(`\n\n---\nPowered by Bostr (${version}) - Open source Nostr bouncer\nhttps://github.com/Yonle/bostr`);
   } else if (req.url.includes("favicon") && favicon) {
     res.writeHead(200, { "Content-Type": "image/" + config.favicon?.split(".").pop() });
