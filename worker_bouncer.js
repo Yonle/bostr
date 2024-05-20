@@ -44,7 +44,7 @@ parentPort.on('message', m => {
         return parentPort.postMessage({
           type: "upstream_msg",
           id: m.id,
-          data: JSON.stringify(["CLOSED", data[1], "rate-limited: too many subscriptions."])
+          data: JSON.stringify(["CLOSED", m.sid, "rate-limited: too many subscriptions."])
         });
       const origID = m.sid;
       if (ws.fakesubalias.hasOwnProperty(origID)) {
