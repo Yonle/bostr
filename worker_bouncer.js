@@ -280,7 +280,7 @@ function newConn(addr, id, reconn_t = 0) {
   if (!stats[addr]) stats[addr] = { raw_rx: 0, rx: 0, tx: 0, f: 0 };
   const relay = new WebSocket(addr, {
     headers: {
-      "User-Agent": `Bostr ${version}; The nostr relay bouncer; https://github.com/Yonle/bostr; ${server_meta.canonical_url || "No canonical bouncer URL specified"}; Contact: ${server_meta.contact}`,
+      "User-Agent": `Bostr ${version}; The nostr relay bouncer; https://github.com/Yonle/bostr; ConnID: ${id}; ${server_meta.canonical_url || "No canonical bouncer URL specified"}; Contact: ${server_meta.contact}`,
     }
   });
 
