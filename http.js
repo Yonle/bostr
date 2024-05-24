@@ -77,7 +77,7 @@ const favicon = fs.existsSync(config.favicon) ? fs.readFileSync(config.favicon) 
 
 server.on('request', (req, res) => {
   const globalStat = bouncer.getStat("_global");
-  const serverAddr = `${req.headers["x-forwarded-proto"]?.replace(/http/i, "ws") || (server.isStandaloneHTTPS ? "wss" : "ws")}://${req.headers.host}${req.url}`;
+  const serverAddr = `${req.headers["x-forwarded-proto"]?.split(",")[0]?.replace(/http/i, "ws") || (server.isStandaloneHTTPS ? "wss" : "ws")}://${req.headers.host}${req.url}`;
   log(`${req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.address()?.address} - ${req.method} ${req.url} [${req.headers["user-agent"] || ""}]`)
 
   if (req.headers.accept?.includes("application/nostr+json"))
