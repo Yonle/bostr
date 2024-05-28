@@ -12,7 +12,7 @@ let { relays, log_about_relays, server_meta, private_keys, reconnect_time, wait_
 log_about_relays = process.env.LOG_ABOUT_RELAYS || log_about_relays;
 
 loadbalancer = loadbalancer || [];
-if (relays.length) loadbalancer.unshift("_me");
+if (relays.length) loadbalancer.unshift(undefined);
 
 // CL MaxEoseScore: Set <max_eose_score> as 0 if configured relays is under of the expected number from <max_eose_score>
 if (relays.length < max_eose_score) max_eose_score = 0;
@@ -184,7 +184,7 @@ function newsess() {
   }
 
   switch (shift) {
-    case "_me":
+    case undefined:
       for (const url of relays) {
         newConn(url, id);
       }
