@@ -446,9 +446,9 @@ function newConn(addr, id, reconn_t = 0) {
     if (!userRelays.hasOwnProperty(id)) return;
     userRelays[id].delete(relay);
     if (res.statusCode >= 500) return relay.emit("close", null);
-    delete relays[relays.indexOf(addr)];
-    delete cache_relays[cache_relays.indexOf(addr)];
-    delete loadbalancer[loadbalancer.indexOf(addr)];
+    relays.splice(relays.indexOf(addr), 1);
+    cache_relays.splice(cache_relays.indexOf(addr), 1);
+    loadbalancer.splice(loadbalancer.indexOf(addr), 1);
     console.log(threadId, "-!-", `${addr} give status code ${res.statusCode}. Not (re)connect with new session again.`);
 
     stats._global.f++
