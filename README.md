@@ -2,7 +2,7 @@
 A nostr relay bouncer.
 
 ## What is this?
-**Bostr** is an nostr relay aggregator **proxy** that acts like a regular nostr relay. It connects to multiple configured relays to exchange data (events). This project purpose is saving mobile user's bandwidth when using nostr.
+**Bostr** is an nostr relay aggregator **proxy** that acts like a regular nostr relay. It connects to multiple configured relays to exchange data (events). This project purpose is saving mobile user's bandwidth when using nostr and to help decentralization.
 
 ## Why?
 Nostr relays is a bunch of dummy servers that store user events. Normally nostr clients connects to more than 5-10 relays to receive and transmit events.
