@@ -3,6 +3,13 @@
 process.title = "Bostr (keeper)";
 
 const config = require(process.env.BOSTR_CONFIG_PATH || "./config");
+
+if (typeof(Bun) === "object") {
+  console.log("You are running Bostr with Bun runtime.");
+  console.log("Clustering will not work, But worker thread will continue to work.");
+  return require("./http.js");
+}
+
 const cluster = require("cluster");
 const fs = require("fs");
 const os = require("os");
@@ -18,7 +25,7 @@ if (!process.env.NO_CLUSTERS && cluster.isPrimary) {
   }
 
   cluster.on('exit', (worker, code, signal) => {
-    console.log(`Worker ${worker.process.pid} died. Forking another one....`);
+    console.log(`Cluster process ${worker.process.pid} died. Forking another one....`);
     cluster.fork();
   });
 
