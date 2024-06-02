@@ -26,10 +26,10 @@ You could set up an bostr bouncer by installing [Bostr CLI](#bostr-cli), or sett
 **Tip:** When dependencies installation is failed due to failed compilation of `bufferutil` or `utf-8-validate` packages, Run `npm install` with `--omit=optional` (Example: `npm install --omit=optional -g bostr`).
 
 Installation Methods
-- [Bostr CLI](#bostrcli)
-- [Source code](#sourcecode)
+- [Bostr CLI](#bostr-cli)
+- [Source code](#source-code)
 - [Docker](#docker)
-- [Bun runtime](#bunruntime)
+- [Bun runtime](#bun-runtime)
 
 ### Bostr CLI
 Install bostr via `npm`:
