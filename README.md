@@ -17,12 +17,19 @@ This project solve the problem by **proxying** multiple relays in a single socke
 In order to make this work properly, A nostr client should only connect to a single bostr relay.
 
 ## Installation
-- [NodeJS](https://nodejs.org) (v18 or up)
+- [NodeJS](https://nodejs.org) (v18 or up) or [Bun runtime](https://bun.sh)
+- A working reverse proxy like [nginx](https://nginx.org) or [caddy](https://caddyserver.com)
 - A fast internet connection
 
 You could set up an bostr bouncer by installing [Bostr CLI](#bostr-cli), or setting up via [The Source Code](#source-code), or via [Docker](#docker).
 
 **Tip:** When dependencies installation is failed due to failed compilation of `bufferutil` or `utf-8-validate` packages, Run `npm install` with `--omit=optional` (Example: `npm install --omit=optional -g bostr`).
+
+Installation Methods
+- [Bostr CLI](#bostrcli)
+- [Source code](#sourcecode)
+- [Docker](#docker)
+- [Bun runtime](#bunruntime)
 
 ### Bostr CLI
 Install bostr via `npm`:
@@ -96,6 +103,28 @@ Then, you will need to edit `compose.yaml` to override the forwarded port to mat
 docker build -t bostr:local .
 docker run --rm --name bostr -p 8080:8080 -v ./config.js:/usr/src/app/config.js bostr:local
 ```
+
+### Bun runtime
+```
+git clone -b stable https://github.com/Yonle/bostr
+cd bostr
+bun install
+```
+
+Rename `config.js.example` as `config.js`, Start editing the file and fill some required fields accordingly to your needs. You could run it for everyone or only for yourself.
+
+#### Running
+```
+bun run index.js
+```
+
+Or run in background with `tmux`:
+
+```
+tmux new -d "bun run index.js"
+```
+
+When configuring reverse proxy, Ensure that `x-forwarded-proto` header was set as `https`.
 
 ## Environment Variables
 You could specify the following environment variables to override the current settings:
