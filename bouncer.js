@@ -250,6 +250,8 @@ function getIdleSess(ws) {
   return new Promise(resolve => ws.onready.add(resolve));
 }
 
+worker.ref();
+
 worker.on("message", handleWorker);
 worker.on("error", err => {
   console.error("\n***");
