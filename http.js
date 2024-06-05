@@ -4,9 +4,9 @@ process.title = "Bostr (cluster)";
 
 const { version } = require("./package.json");
 const WebSocket = require("ws");
-const http = require("http");
-const http2 = require("http2");
-const fs = require("fs");
+const http = require("node:http");
+const http2 = require("node:http2");
+const fs = require("node:fs");
 const bouncer = require(`./bouncer.js`);
 const undici = require("undici");
 

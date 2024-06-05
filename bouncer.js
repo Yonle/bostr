@@ -1,9 +1,9 @@
 "use strict";
 // Anything about handling client connections is in this code.
 
-const { Worker } = require("worker_threads");
+const { Worker } = require("node:worker_threads");
 const { version } = require("./package.json");
-const querystring = require("querystring");
+const querystring = require("node:querystring");
 const { validateEvent, nip19 } = require("nostr-tools");
 const auth = require("./auth.js");
 

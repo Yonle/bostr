@@ -1,7 +1,7 @@
 "use strict";
 // Anything about talking to upstream relays is handled here.
 
-const { parentPort, threadId } = require("worker_threads");
+const { parentPort, threadId } = require("node:worker_threads");
 const { version } = require("./package.json");
 const WebSocket = require("ws");
 const { validateEvent, nip19, matchFilters, mergeFilters, getFilterLimit } = require("nostr-tools");
@@ -137,7 +137,7 @@ parentPort.on('message', m => {
       if (!csess.hasOwnProperty(m.id)) return;
 
       for (const sock of userRelays[m.id]) {
-        sock.terminate();
+        sock.close();
       }
 
       delete userRelays[m.id];
@@ -289,7 +289,7 @@ function newConn(addr, id, reconn_t = 0) {
   relay.ratelimit = 0;
   relay.pendingNIP42 = new Set();
   relay.on('open', _ => {
-    if (!csess.hasOwnProperty(id)) return relay.terminate();
+    if (!csess.hasOwnProperty(id)) return relay.close();
     const client = csess[id];
     reconn_t = 0;
     if (log_about_relays) console.log(threadId, "---", id, "Connected to", addr, `(${relay_type(addr)})`);

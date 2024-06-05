@@ -10,9 +10,9 @@ if (typeof(Bun) === "object") {
   return require("./http.js");
 }
 
-const cluster = require("cluster");
-const fs = require("fs");
-const os = require("os");
+const cluster = require("node:cluster");
+const fs = require("node:fs");
+const os = require("node:os");
 
 if (!process.env.NO_CLUSTERS && cluster.isPrimary) {
   const numClusters = process.env.CLUSTERS || config.clusters || (os.availableParallelism ? os.availableParallelism() : (os.cpus().length || 2))
