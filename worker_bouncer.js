@@ -137,7 +137,7 @@ parentPort.on('message', m => {
       if (!csess.hasOwnProperty(m.id)) return;
 
       for (const sock of userRelays[m.id]) {
-        sock.close();
+        sock.terminate();
       }
 
       delete userRelays[m.id];
@@ -289,7 +289,7 @@ function newConn(addr, id, reconn_t = 0) {
   relay.ratelimit = 0;
   relay.pendingNIP42 = new Set();
   relay.on('open', _ => {
-    if (!csess.hasOwnProperty(id)) return relay.close();
+    if (!csess.hasOwnProperty(id)) return relay.terminate();
     const client = csess[id];
     reconn_t = 0;
     if (log_about_relays) console.log(threadId, "---", id, "Connected to", addr, `(${relay_type(addr)})`);
