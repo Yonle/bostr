@@ -340,7 +340,7 @@ class newConn extends WebSocket {
           if (!this.isLoadBalancer) client.events[data[1]].add(data[2]?.id);
           parentPort.postMessage({ type: "upstream_msg", id, data: JSON.stringify(data) });
 
-          if (max_known_events && client.events[data[1]].size >= max_known_events)
+          if (max_known_events && client.events[data[1]].size > max_known_events)
             client.events[data[1]].delete(client.events[data[1]].values().next().value);
 
           stats._global.rx++;
