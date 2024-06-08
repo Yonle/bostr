@@ -1,4 +1,5 @@
 "use strict";
+const { threadId } = require("node:worker_threads");
 const { finalizeEvent, nip19 } = require("nostr-tools");
 
 module.exports = (relay, pubkey, privkey, challenge) => {
@@ -16,4 +17,6 @@ module.exports = (relay, pubkey, privkey, challenge) => {
   }, privkey);
 
   relay.send(JSON.stringify(["AUTH", signed_challenge]));
+
+  console.log(threadId, "-", relay.id, "NIP-42: Sending Signed Challenge to", relay.url);
 }
