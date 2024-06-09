@@ -449,7 +449,6 @@ function receiverOnMessage(data) {
 }
 
 function receiverOnError(_) {
-  if (log_about_relays) return;
   console.error(threadId, "-!-", this.id, this.addr, _.toString());
 }
 
