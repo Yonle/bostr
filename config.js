@@ -96,6 +96,7 @@ module.exports = {
   // NOTE: - Require NIP-42 compatible nostr client.
   //         You may use <allowed_event_authors> instead if your client does not support NIP-42.
   authorized_keys: [
+    // "npub1m78s5eqv8l7snc5nnxdvlgue6pt5epgplndtem99quhwyptas7jss2qx53",
     // "pubkey-in-hex",
     // "npub ....",
     // ....
@@ -143,7 +144,7 @@ module.exports = {
   // Only for when nostr client requesting server information.
   server_meta: {
     "contact": "unset",
-    "pubkey": "0000000000000000000000000000000000000000000000000000000000000000",
+    "pubkey": "npub1m78s5eqv8l7snc5nnxdvlgue6pt5epgplndtem99quhwyptas7jss2qx53",
     "description": "Nostr relay bouncer",
     "name": "Bostr",
     "software": "git+https://github.com/Yonle/bostr",
@@ -160,8 +161,15 @@ module.exports = {
 
   // Nostr relays to bounce [Required]
   relays: [
-    "wss://example1.com",
-    "wss://example2.com",
+    "wss://relay-jp.nostr.wirednet.jp",
+    "wss://nostr.fediverse.jp",
+    "wss://nrelay-jp.c-stellar.net",
+    "wss://r.kojira.io",
+    "wss://nostrja-kari.heguro.com",
+    "wss://relay-jp.shino3.net",
+    "wss://nostr.holybea.com",
+    "wss://relay-jp.nostr.moctane.com",
+    "wss://nostream.ocha.one",
     // "wss://example3.com",
     // ...and so on
   ],
