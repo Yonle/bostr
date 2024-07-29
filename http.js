@@ -68,9 +68,14 @@ if (
   server.isStandaloneHTTPS = false;
 }
 
-const wss = new WebSocket.WebSocketServer({
+const wss_for_everyone = new WebSocket.WebSocketServer({
   noServer: true,
   perMessageDeflate: config.perMessageDeflate || false
+});
+
+const wss_for_apple = new WebSocket.WebSocketServer({
+  noServer: true,
+  perMessageDeflate: false
 });
 
 const favicon = fs.existsSync(config.favicon) ? fs.readFileSync(config.favicon) : null;
@@ -145,13 +150,20 @@ server.on('request', (req, res) => {
 
 server.on('upgrade', (req, sock, head) => {
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || sock.address()?.address;
+  const ua = req.headers["user-agent"]
+  const isApple = ua?.length && (ua.includes("CFNetwork") || ua.includes("Safari")) && !ua.includes("Chrome") && !ua.includes("Firefox")
 
   if (config.blocked_hosts && config.blocked_hosts.includes(ip)) return sock.destroy();
   if (connectedHosts.filter(i => i === ip).length >= (config.max_conn_per_ip || Infinity)) return sock.destroy();
 
   connectedHosts.push(ip);
 
-  wss.handleUpgrade(req, sock, head, _ => bouncer.handleConnection(_, req, _ => delete connectedHosts[connectedHosts.indexOf(ip)]));
+  let the_wss
+
+  if (isApple) the_wss = wss_for_apple;
+  else the_wss = wss_for_everyone;
+
+  the_wss.handleUpgrade(req, sock, head, _ => bouncer.handleConnection(_, req, _ => delete connectedHosts[connectedHosts.indexOf(ip)]));
 });
 
 const listened = server.listen(process.env.PORT || config.port, config.address || "0.0.0.0", _ => {
