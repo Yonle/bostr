@@ -107,7 +107,7 @@ server.on('request', (req, res) => {
       res.write("- " + loadbalancerUpstreamLinks.join("\n- ") + "\n");
     }
 
-    res.write(`\nI have ${wss.clients.size} clients currently connected to this bouncer${(process.env.CLUSTERS || config.clusters) > 1 ? " on this cluster" : ""}.\n`);
+    res.write(`\nI have ${wss_for_everyone.clients.size+wss_for_apple.clients.size} clients currently connected to this bouncer${(process.env.CLUSTERS || config.clusters) > 1 ? " on this cluster" : ""}.\n`);
 
     res.write(`\nAll bouncer activities in total:`);
     res.write(`\n- raw_rx: ${globalStat.raw_rx}`);
