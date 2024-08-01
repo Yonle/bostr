@@ -18,7 +18,9 @@ module.exports = (authKey, data, ws, req) => {
     return false;
   }
 
-  if (!authorized_keys?.includes(data.pubkey) && !private_keys[data.pubkey] && !noscraper) {
+  let pubkeyInConfig = authorized_keys?.includes(data.pubkey) || data.pubkey in private_keys;
+
+  if (authorized_keys?.length && !pubkeyInConfig) {
     ws.send(JSON.stringify(["OK", data.id, false, "unauthorized."]));
     return false;
   }
