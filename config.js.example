@@ -146,7 +146,7 @@ module.exports = {
     "pubkey": "0000000000000000000000000000000000000000000000000000000000000000",
     "description": "Nostr relay bouncer",
     "name": "Bostr",
-    "software": "git+https://github.com/Yonle/bostr",
+    "software": "git+https://codeberg.org/Yonle/bostr",
     "canonical_url": "wss://bostr.example.com",
 
     // Some nostr client may read the following for compatibility check.

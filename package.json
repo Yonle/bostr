@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/Yonle/bostr.git"
+    "url": "git+ssh://git@codeberg.org/Yonle/bostr.git"
   },
   "keywords": [
     "nostr",
@@ -23,9 +23,9 @@
   "author": "Yonle <yonle@lecturify.net>",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/Yonle/bostr/issues"
+    "url": "https://codeberg.org/Yonle/bostr/issues"
   },
-  "homepage": "https://github.com/Yonle/bostr#readme",
+  "homepage": "https://codeberg.org/Yonle/bostr#readme",
   "dependencies": {
     "nostr-tools": "^2.5.2",
     "undici": "^6.17.0",

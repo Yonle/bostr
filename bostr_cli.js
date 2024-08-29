@@ -19,7 +19,7 @@ function showHelp() {
     "  testworker [conffile] - Test worker with specified bostr config\n" +
     "  help                  - Show this help text\n\n" +
     "Software is licensed under BSD-3-Clause\n" +
-    "https://github.com/Yonle/bostr"
+    "https://codeberg.org/Yonle/bostr"
   );
 }
 

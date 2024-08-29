@@ -33,7 +33,7 @@ if (!config.relays?.length) (async () => {
   console.log("Load balancer mode. Fetching relays list from", config.loadbalancer[0].replace(/^ws/, "http"));
   const request = await undici.request(config.loadbalancer[0].replace(/^ws/, "http"), {
     headers: {
-      "User-Agent": `Bostr ${version}; The nostr relay bouncer; https://github.com/Yonle/bostr; ${config.server_meta.canonical_url || "No canonical bouncer URL specified"}; Contact: ${config.server_meta.contact}`
+      "User-Agent": `Bostr ${version}; The nostr relay bouncer; https://codeberg.org/Yonle/bostr; ${config.server_meta.canonical_url || "No canonical bouncer URL specified"}; Contact: ${config.server_meta.contact}`
     }
   });
 
@@ -139,7 +139,7 @@ server.on('request', (req, res) => {
     res.write(`\n  ${serverAddr}?save=1`);
     res.write(`\n  (Saves bandwidth usage)`);
     res.write(`\n\nAdministrator Contact: ${config.server_meta.contact}`);
-    res.end(`\n\n---\nPowered by Bostr (${version}) - Open source Nostr bouncer\nhttps://github.com/Yonle/bostr`);
+    res.end(`\n\n---\nPowered by Bostr (${version}) - Open source Nostr bouncer\nhttps://codeberg.org/Yonle/bostr`);
   } else if (req.url.includes("favicon") && favicon) {
     res.writeHead(200, { "Content-Type": "image/" + config.favicon?.split(".").pop() });
     res.end(favicon);

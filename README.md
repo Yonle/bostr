@@ -40,7 +40,7 @@ npm install -g bostr
 or via git:
 
 ```
-npm install -g https://github.com/Yonle/bostr.git
+npm install -g https://codeberg.org/Yonle/bostr.git
 ```
 
 You will need to make config with the following command:
@@ -67,7 +67,7 @@ When configuring reverse proxy, Ensure that `x-forwarded-proto` header was set a
 ### Source code
 
 ```
-git clone -b stable https://github.com/Yonle/bostr
+git clone -b stable https://codeberg.org/Yonle/bostr
 cd bostr
 npm install
 ```
@@ -89,7 +89,7 @@ When configuring reverse proxy, Ensure that `x-forwarded-proto` header was set a
 
 ### Docker
 ```
-git clone https://github.com/Yonle/bostr
+git clone https://codeberg.org/Yonle/bostr
 cd bostr
 cp config.js.example config.js
 ```
@@ -106,7 +106,7 @@ docker run --rm --name bostr -p 8080:8080 -v ./config.js:/usr/src/app/config.js 
 
 ### Bun runtime
 ```
-git clone -b stable https://github.com/Yonle/bostr
+git clone -b stable https://codeberg.org/Yonle/bostr
 cd bostr
 bun install
 ```
