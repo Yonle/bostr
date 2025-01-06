@@ -33,7 +33,7 @@ if (!config.relays?.length) (async () => {
   console.log("Load balancer mode. Fetching relays list from", config.loadbalancer[0].replace(/^ws/, "http"));
   const request = await undici.request(config.loadbalancer[0].replace(/^ws/, "http"), {
     headers: {
-      "User-Agent": `Bostr ${version}; The nostr relay bouncer; https://codeberg.org/Yonle/bostr; ${config.server_meta.canonical_url || "No canonical bouncer URL specified"}; Contact: ${config.server_meta.contact}`
+      "User-Agent": config.user_agent
     }
   });
 
