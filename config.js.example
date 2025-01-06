@@ -198,5 +198,8 @@ module.exports = {
     // "wss://bostr2.example.com",
     // "wss://bostr3.example.com",
     // ...and so on
-  ]
+  ],
+
+  // User agent to use on upstream connection.
+  user_agent: "Bostr (https://codeberg.org/Yonle/bostr) on wss://bostr.example.com - A nostr relay proxy aggregator"
 }
