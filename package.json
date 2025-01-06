@@ -27,15 +27,15 @@
   },
   "homepage": "https://codeberg.org/Yonle/bostr#readme",
   "dependencies": {
-    "nostr-tools": "^2.5.2",
-    "undici": "^6.17.0",
-    "ws": "^8.17.0"
+    "nostr-tools": "^2.10.4",
+    "undici": "^7.2.0",
+    "ws": "^8.18.0"
   },
   "optionalDependencies": {
-    "bufferutil": "^4.0.8",
-    "utf-8-validate": "^6.0.4"
+    "bufferutil": "^4.0.9",
+    "utf-8-validate": "^6.0.5"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   }
 }

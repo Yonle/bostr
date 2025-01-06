@@ -17,7 +17,7 @@ This project solve the problem by **proxying** multiple relays in a single socke
 In order to make this work properly, A nostr client should only connect to a single bostr relay.
 
 ## Installation
-- [NodeJS](https://nodejs.org) (v18 or up) or [Bun runtime](https://bun.sh)
+- [NodeJS](https://nodejs.org) (v20 or up) or [Bun runtime](https://bun.sh)
 - A working reverse proxy like [nginx](https://nginx.org) or [caddy](https://caddyserver.com)
 - A fast internet connection
 
