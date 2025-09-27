@@ -34,7 +34,7 @@ if (!config.relays?.length) (async () => {
   const request = await undici.request(config.loadbalancer[0].replace(/^ws/, "http"), {
     headers: {
       "User-Agent": config.user_agent
-    }
+    },
   });
 
   const text = await request.body.text();

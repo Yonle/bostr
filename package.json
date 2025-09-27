@@ -28,6 +28,7 @@
   "homepage": "https://codeberg.org/Yonle/bostr#readme",
   "dependencies": {
     "nostr-tools": "^2.10.4",
+    "socks-proxy-agent": "^8.0.5",
     "undici": "^7.2.0",
     "ws": "^8.18.0"
   },
